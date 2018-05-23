@@ -5,6 +5,7 @@ import zemberek.morphology.analysis.SentenceAnalysis;
 import zemberek.morphology.analysis.SingleAnalysis;
 import zemberek.morphology.analysis.WordAnalysis;
 import zemberek.tokenization.TurkishSentenceExtractor;
+import zemberek.core.turkish.PrimaryPos;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -14,10 +15,11 @@ import java.nio.file.StandardOpenOption;
 import java.util.Scanner;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.StringJoiner;
 
 public class PreProcessor {
 
-    public static void processFile(String filepath) throws IOException {
+    public static void processFile(String filepath, TurkishMorphology morphology, TurkishSentenceExtractor extractor) throws IOException {
 
         // Create an output file to put the processed text in.
         // TODO: Currently generates output path in here. Make it a parameter
@@ -25,10 +27,6 @@ public class PreProcessor {
         if (outPath.toFile().exists()) {
             Files.delete(outPath);
         }
-
-        // Zemberek classes used for processing.
-        TurkishSentenceExtractor extractor = TurkishSentenceExtractor.DEFAULT;
-        TurkishMorphology morphology = TurkishMorphology.createWithDefaults();
 
         // Reading file line by line.
         Scanner sc = new Scanner(new File(filepath));
@@ -54,6 +52,7 @@ public class PreProcessor {
 
                     // Can't include words that zemberek can't find in the dictionary
                     // or disambiguate breaks.
+                    // TODO: Find a better way to do this.
                     List<WordAnalysis> noNullAnalyses = new ArrayList<>();
                     for(WordAnalysis a : analyses){
                         if(a.analysisCount() != 0){
@@ -66,7 +65,9 @@ public class PreProcessor {
                     // Build a string from the output of disambiguate.
                     String temp = "";
                     for(SingleAnalysis sa : result.bestAnalysis()){
-                        temp += sa.getDictionaryItem().id + " ";
+                        // We don't want punctuation
+                        if(!sa.getDictionaryItem().primaryPos.equals(PrimaryPos.Punctuation))
+                            temp += sa.getDictionaryItem().id + " ";
                     }
                     // Write line to output file.
                     Files.write(outPath, (temp + System.lineSeparator()).getBytes(),
@@ -84,9 +85,34 @@ public class PreProcessor {
         //                                    .stream()
         //                                    .forEach(System.out::println)
         //                    );
-
-
     }
+
+    /*
+     * Creates a dictionary file that contains the id for each
+     * item in the dictionary in a separate line.
+     *
+     *
+     *
+     */
+    public static void processDictionary(TurkishMorphology morphology, String outputPath) throws IOException {
+        // Delete the file if it exists
+        Path outPath = Paths.get(outputPath);
+        if (outPath.toFile().exists()) {
+            Files.delete(outPath);
+        }
+        // Build string
+        final StringJoiner joiner = new StringJoiner("\n");
+        morphology.getLexicon().iterator().forEachRemaining(item -> {
+            // Filter punctuation
+            if (!item.primaryPos.equals(PrimaryPos.Punctuation)) joiner.add(item.id);
+        });
+        // Write to file
+        Files.write(outPath, joiner.toString().getBytes(),
+                StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+
+        System.out.println("ProcessedDictionary");
+    }
+
 
     // ****************************** USED FOR TESTIN ****************************** \\
     public static void main ( String[] args) throws IOException {
@@ -116,7 +142,14 @@ public class PreProcessor {
 
 //        Files.createFile(Paths.get("testing.txt"));
 //        System.out.println("file should be created");
-        PreProcessor.processFile("src\\main\\java\\org\\TurkishNLP\\preprocessing\\sample_texts\\short.txt");
+
+        TurkishMorphology morphology = TurkishMorphology.createWithDefaults();
+//        PreProcessor.processDictionary(morphology, "dictionary.processed");
+
+        // Zemberek classes used for processing.
+        TurkishSentenceExtractor extractor = TurkishSentenceExtractor.DEFAULT;
+
+        PreProcessor.processFile("src\\main\\java\\org\\TurkishNLP\\preprocessing\\sample_texts\\short.txt", morphology, extractor);
 
     }
 }

@@ -47,21 +47,47 @@
     </plugins>
   </build>
 
+  <properties>
+    <nd4j.version>0.9.1</nd4j.version>
+    <dl4j.version>0.9.1</dl4j.version>
+    <datavec.version>0.9.1</datavec.version>
+    <zemberek.version>0.12.0</zemberek.version>
+  </properties>
+
   <dependencies>
+
+    <!--using dl4j for neural nets-->
+    <dependency>
+      <groupId>org.deeplearning4j</groupId>
+      <artifactId>deeplearning4j-core</artifactId>
+      <version>${dl4j.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.deeplearning4j</groupId>
+      <artifactId>deeplearning4j-nlp</artifactId>
+      <version>${dl4j.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.nd4j</groupId>
+      <artifactId>nd4j-native-platform</artifactId>
+      <version>${nd4j.version}</version>
+    </dependency>
+
+    <!--zemberek for preprocessing-->
     <dependency>
       <groupId>zemberek-nlp</groupId>
       <artifactId>zemberek-core</artifactId>
-      <version>0.12.0</version>
+      <version>${zemberek.version}</version>
     </dependency>
     <dependency>
       <groupId>zemberek-nlp</groupId>
       <artifactId>zemberek-tokenization</artifactId>
-      <version>0.12.0</version>
+      <version>${zemberek.version}</version>
     </dependency>
     <dependency>
-      <groupId>zemberek-nlp</groupId>
+       <groupId>zemberek-nlp</groupId>
       <artifactId>zemberek-morphology</artifactId>
-      <version>0.12.0</version>
+      <version>${zemberek.version}</version>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
