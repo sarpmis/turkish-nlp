@@ -55,7 +55,6 @@
   </properties>
 
   <dependencies>
-
     <!--using dl4j for neural nets-->
     <dependency>
       <groupId>org.deeplearning4j</groupId>
