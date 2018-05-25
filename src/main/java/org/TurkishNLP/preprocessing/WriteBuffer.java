@@ -43,7 +43,6 @@ public class WriteBuffer {
         try {
             Files.write(outPath, builder.toString().getBytes(),
                     StandardOpenOption.CREATE, StandardOpenOption.APPEND);
-            System.out.println("wrote");
             return true;
         } catch (IOException e){
             return false;

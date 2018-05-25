@@ -23,7 +23,6 @@ public class PreProcessor {
     public static void processFile(String filepath,
                                    TurkishMorphology morphology,
                                    TurkishSentenceExtractor extractor) throws IOException {
-
         Path outPath = Paths.get(System.getProperty("user.dir"),"src", "main",
                 "java", "org", "TurkishNLP", "preprocessing", "processed_files",
                 Paths.get(filepath).getFileName().toString().split("\\.")[0] + ".processed");
