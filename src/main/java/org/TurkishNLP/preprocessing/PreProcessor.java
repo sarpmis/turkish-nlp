@@ -6,6 +6,7 @@ import zemberek.morphology.analysis.SingleAnalysis;
 import zemberek.morphology.analysis.WordAnalysis;
 import zemberek.tokenization.TurkishSentenceExtractor;
 import zemberek.core.turkish.PrimaryPos;
+import org.apache.commons.lang3.StringUtils;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -16,83 +17,77 @@ import java.util.Scanner;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringJoiner;
+import java.util.stream.Collectors;
 
 public class PreProcessor {
 
-    public static void processFile(String filepath, TurkishMorphology morphology, TurkishSentenceExtractor extractor) throws IOException {
-
-        // Create an output file to put the processed text in.
+    public static void processFile(String filepath,
+                                   TurkishMorphology morphology,
+                                   TurkishSentenceExtractor extractor) throws IOException {
+        // Create output file
         // TODO: Currently generates output path in here. Make it a parameter
         Path outPath = Paths.get(filepath.split("\\.")[0] + ".processed");
         if (outPath.toFile().exists()) {
             Files.delete(outPath);
         }
 
+        // Use a buffer to avoid using too much mem. use 10mb
+        WriteBuffer buffer = new WriteBuffer(outPath, 1000);
+
         // Reading file line by line.
         Scanner sc = new Scanner(new File(filepath));
         String currentLine, lastSentence = "";
+
         while(sc.hasNextLine()){
             currentLine = sc.nextLine();
-            // If last sentence on previous line did not end (indicated by a
-            // punctuation symbol) prepend that (half) sentence to currentLine.
+            // If last sentence on previous line wraps to next line
+            // prepend that (half) sentence to currentLine.
             if (!lastSentence.matches(".*\\p{Punct}")) {
                 currentLine = lastSentence + " " + currentLine;
             }
             // Extract sentences from current line.
             List<String> sentences = extractor.fromParagraph(currentLine);
-            lastSentence = sentences.get(sentences.size()-1);
+            if(sentences.size()>0) lastSentence = sentences.get(sentences.size()-1);
+            else lastSentence = "";
 
-            // Each sentence is analyzed, disambiguated and printed
-            // on a separate line in the output file.
+            sentences = cleanSentences(sentences);
+
             for(String s : sentences){
-                // We don't want to put a possible half sentence on a line.
-                // TODO: Make this better
-                if(s.matches(".*\\p{Punct}")){
-                    List<WordAnalysis> analyses = morphology.analyzeSentence(s);
+                List<WordAnalysis> analyses = morphology.analyzeSentence(s);
 
-                    // Can't include words that zemberek can't find in the dictionary
-                    // or disambiguate breaks.
-                    // TODO: Find a better way to do this.
-                    List<WordAnalysis> noNullAnalyses = new ArrayList<>();
-                    for(WordAnalysis a : analyses){
-                        if(a.analysisCount() != 0){
-                            noNullAnalyses.add(a);
-                        }
-                    }
+                // Can't include words that zemberek can't find in the dictionary
+                // or else disambiguate breaks
+                analyses.removeIf(a -> a.analysisCount() == 0);
 
-                    SentenceAnalysis result = morphology.disambiguate(s, noNullAnalyses);
+                try {
+                    SentenceAnalysis result = morphology.disambiguate(s, analyses);
 
                     // Build a string from the output of disambiguate.
                     String temp = "";
-                    for(SingleAnalysis sa : result.bestAnalysis()){
-                        // We don't want punctuation
-                        if(!sa.getDictionaryItem().primaryPos.equals(PrimaryPos.Punctuation))
-                            temp += sa.getDictionaryItem().id + " ";
+                    for (SingleAnalysis sa : result.bestAnalysis()) {
+                        temp += sa.getDictionaryItem().id + " ";
                     }
-                    // Write line to output file.
-                    Files.write(outPath, (temp + System.lineSeparator()).getBytes(),
-                            StandardOpenOption.CREATE,StandardOpenOption.APPEND);
+                    buffer.add(temp + System.lineSeparator());
+                } catch(IllegalArgumentException e){
+//                    System.out.println(e.toString() + " Sentence = " + s);
                 }
             }
         }
-        //            TODO: make this lambda exp work instead of for and if statements above
-        //            TODO: currently doesn't work because disambiguate throws NullPointerException when no dictionary item is found
-        //            sentences.stream()
-        //                    .filter(s -> s.matches(".*\\p{Punct}"))
-        //                    .forEach(
-        //                            s -> morphology.disambiguate(s,morphology.analyzeSentence(s))
-        //                                    .bestAnalysis()
-        //                                    .stream()
-        //                                    .forEach(System.out::println)
-        //                    );
+        buffer.finish();
+    }
+
+    private static List<String> cleanSentences(List<String> sentences){
+        List<String> result = sentences.stream()
+                .filter(s -> s.matches(".*\\p{Punct}"))
+                .map(s -> s.replaceAll("[^\\p{L}\\s]", ""))
+                .collect(Collectors.toList());
+        result.removeIf(s -> StringUtils.isBlank(s));
+        return result;
     }
 
     /*
      * Creates a dictionary file that contains the id for each
      * item in the dictionary in a separate line.
-     *
-     *
-     *
      */
     public static void processDictionary(TurkishMorphology morphology, String outputPath) throws IOException {
         // Delete the file if it exists
@@ -116,40 +111,14 @@ public class PreProcessor {
 
     // ****************************** USED FOR TESTIN ****************************** \\
     public static void main ( String[] args) throws IOException {
-//        TurkishMorphology morphology = TurkishMorphology.createWithDefaults();
-//        System.out.println("Starting test...");
-//
-//        String sentence = "Kasım ayı 31 gündür.";
-//        Log.info("Sentence  = " + sentence);
-//        List<WordAnalysis> analyses = morphology.analyzeSentence(sentence);
-//
-//        Log.info("Sentence word analysis result:");
-//        for (WordAnalysis entry : analyses) {
-//            Log.info("Word = " + entry.getInput());
-//            for (SingleAnalysis analysis : entry) {
-//                Log.info(analysis.formatLong());
-//            }
-//        }
-//        SentenceAnalysis result = morphology.disambiguate(sentence, analyses);
-//
-//        Log.info("\nAfter ambiguity resolution : ");
-//        result.bestAnalysis().forEach(Log::info);
-//        for(SingleAnalysis s : result.bestAnalysis()){
-//            System.out.println(s + " -> Item : " + s.getDictionaryItem().lemma);
-//        }
-
-        // FILE STUFF *******************************************
-
-//        Files.createFile(Paths.get("testing.txt"));
-//        System.out.println("file should be created");
-
+         // Zemberek classes used for nlp processing.
+        TurkishSentenceExtractor extractor = TurkishSentenceExtractor.DEFAULT;
         TurkishMorphology morphology = TurkishMorphology.createWithDefaults();
 //        PreProcessor.processDictionary(morphology, "dictionary.processed");
 
-        // Zemberek classes used for processing.
-        TurkishSentenceExtractor extractor = TurkishSentenceExtractor.DEFAULT;
 
-        PreProcessor.processFile("src\\main\\java\\org\\TurkishNLP\\preprocessing\\sample_texts\\short.txt", morphology, extractor);
+//        PreProcessor.processFile("src\\main\\java\\org\\TurkishNLP\\preprocessing\\sample_texts\\short.txt", morphology, extractor);
+        PreProcessor.processFile("C:\\Dev\\nim_programs\\wiki2text\\trwiki.txt", morphology, extractor);
 
     }
 }
