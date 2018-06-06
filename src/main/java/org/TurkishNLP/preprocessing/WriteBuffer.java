@@ -10,7 +10,7 @@ import java.nio.file.StandardOpenOption;
  * Class used for writing large amount of text
  * to a file. When buffer is full it will
  * write to file. When done using buffer
- * use finish()
+ * use finish() to write the last batch
  */
 public class WriteBuffer {
     private Path outPath;
