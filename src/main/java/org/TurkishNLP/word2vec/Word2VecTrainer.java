@@ -47,6 +47,4 @@ public class Word2VecTrainer {
         Collection<String> lst = model.wordsNearest("tarih_Noun", 10);
         log.info("Closest words to 'tarih' on 2nd run: " + lst);
     }
-
-
 }

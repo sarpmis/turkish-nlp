@@ -23,7 +23,6 @@ public class Word2VecOperations {
     }
 
     public static void updateVocab(){
-
     }
 
     public static void printClosest(Word2Vec model, Collection<String> lst, int top){

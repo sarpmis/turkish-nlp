@@ -33,3 +33,4 @@ hs_err_pid*
 
 # don't need data
 data/models/
+data/corpora/

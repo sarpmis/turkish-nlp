@@ -29,20 +29,25 @@ public class PreProcessor {
     }
 
     public void processFile(String filepath) throws IOException {
+        log.info("Starting process");
+        long lineCount = 0;
+        Timer.setTimer();
 
         Path outPath = Paths.get(System.getProperty("user.dir"), "data", "processed_files",
                 Paths.get(filepath).getFileName().toString().split("\\.")[0] + ".processed");
         if (outPath.toFile().exists()) {
             Files.delete(outPath);
+            log.info("A processed file for " + filepath + " already exists, overwriting");
         }
+
+
 
         // Use a buffer to avoid using too much mem. use 10mb
         WriteBuffer buffer = new WriteBuffer(outPath, 10000);
 
         // Reading file line by line.
-        Scanner sc = new Scanner(new File(filepath));
+        Scanner sc = new Scanner(new File(filepath),"UTF-8");
         String currentLine, lastSentence = "";
-
         while(sc.hasNextLine()){
             currentLine = sc.nextLine();
             // If last sentence on previous line wrapped to this line
@@ -58,34 +63,20 @@ public class PreProcessor {
             sentences = cleanSentences(sentences);
 
             for(String s : sentences){
-//                List<WordAnalysis> analyses = morphology.analyzeSentence(s);
-//
-//                // Can't include words that zemberek can't find in the dictionary
-//                // or else disambiguate breaks
-//                analyses.removeIf(a -> a.analysisCount() == 0);
-//
-//                try {
-//                    SentenceAnalysis result = morphology.disambiguate(s, analyses);
-//
-//                    // Build a string from the output of disambiguate.
-//                    String temp = "";
-//                    for (SingleAnalysis sa : result.bestAnalysis()) {
-//                        temp += sa.getDictionaryItem().id + " ";
-//                    }
-//                    buffer.add(temp + System.lineSeparator());
-//                } catch(IllegalArgumentException e){
-////                    System.out.println(e.toString() + " Sentence = " + s);
-//                }
-                analyzeSentence(s).stream().forEach(word -> buffer.add(word));
+                analyzeSentence(s).stream().forEach(word -> buffer.add(word + " "));
                 buffer.add(System.lineSeparator());
+                lineCount++;
             }
         }
         buffer.finish();
+        Timer.endTimer();
+        log.info("Finished processing file +  " + filepath);
+        log.info("Processed " + lineCount + " lines in " + Timer.results());
     }
 
     /*
      * Filter out sentences that don't end in punctuation,
-     * remove every non-letter/whitespace
+     * remove everything that is not a letter or whitespace
      */
     private static List<String> cleanSentences(List<String> sentences){
         List<String> result = sentences.stream()
@@ -116,12 +107,19 @@ public class PreProcessor {
         Files.write(outPath, joiner.toString().getBytes(),
                 StandardOpenOption.CREATE, StandardOpenOption.APPEND);
 
-        System.out.println("ProcessedDictionary");
+        log.info("Processed dictionary");
     }
 
-    public String processString(String s){
-        return null;
+    /*
+     * Returns Zemberek root dictionary as an ArrayList<String> made up
+     * of dictionary item id's
+     */
+    private ArrayList<String> getDictionary() {
+        ArrayList<String> list = new ArrayList<>();
+        morphology.getLexicon().iterator().forEachRemaining(item -> list.add(item.id));
+        return list;
     }
+
 
     public List<String> analyzeSentence(String s){
         List<String> lst = new ArrayList<>();
@@ -144,7 +142,7 @@ public class PreProcessor {
             }
 
         } catch(IllegalArgumentException e){
-            log.error("Something went wrong while analyzing sentence = " + s);
+            log.info("No dictionary items found for sentence = " + s);
         }
         return lst;
     }
@@ -152,10 +150,12 @@ public class PreProcessor {
 
     // ****************************** USED FOR TESTING ****************************** \\
     public static void main ( String[] args) throws IOException {
-         // Zemberek classes used for nlp processing.
         PreProcessor pp = new PreProcessor();
-////        PreProcessor.processFile("src\\main\\java\\org\\TurkishNLP\\preprocessing\\sample_texts\\short.txt", morphology, extractor);
-//        PreProcessor.processFile("C:\\Dev\\nim_programs\\wiki2text\\trwiki.txt", morphology, extractor);
-        System.out.println(pp.analyzeSentence("Nevşehir'deki mitingin ardından Adıyaman'a geçerek yurttaşlarla bir araya geldi."));
+//        PreProcessor.processFile("src\\main\\java\\org\\TurkishNLP\\preprocessing\\sample_texts\\short.txt", morphology, extractor);
+//        PreProcessor.processFile("C:\\Dev\\nim_programs\\wiki2text\\trwiki.txt", morpho
+// y, extractor);
+//        pp.processFile("data\\corpora\\tr_corpus.txt");
+        pp.processFile("data\\corpora\\short.txt");
+//        System.out.println(pp.analyzeSentence("Nevşehir'deki mitingin ardından Adıyaman'a geçerek yurttaşlarla bir araya geldi."));
     }
 }
