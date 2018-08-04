@@ -30,8 +30,3 @@ hs_err_pid*
 */.idea/workspace.xml 
 */.idea/tasks.xml
 .idea/
-
-# don't need data
-data/models/*
-data/corpora/*
-data/processed_files/*
