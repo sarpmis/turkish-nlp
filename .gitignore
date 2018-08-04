@@ -32,5 +32,6 @@ hs_err_pid*
 .idea/
 
 # don't need data
-data/models/
-data/corpora/
+data/models/*
+data/corpora/*
+data/processed_files/*
