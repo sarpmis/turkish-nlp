@@ -8,13 +8,12 @@
   <name>Turkish-NLP</name>
   <url>http://maven.apache.org</url>
 
-  <repositories>
-    <repository>
-      <id>ahmetaa-repo</id>
-      <name>ahmetaa Maven Repo on Github</name>
-      <url>https://raw.github.com/ahmetaa/maven-repo/master</url>
-    </repository>
-  </repositories>
+  <properties>
+    <nd4j.version>1.0.0-beta</nd4j.version>
+    <dl4j.version>1.0.0-beta</dl4j.version>
+    <datavec.version>1.0.0-beta</datavec.version>
+    <zemberek.version>0.15.0</zemberek.version>
+  </properties>
 
   <build>
     <plugins>
@@ -30,6 +29,25 @@
       </plugin>
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifest>
+              <mainClass>org.TurkishNLP.CLI</mainClass>
+            </manifest>
+          </archive>
+          <descriptorRefs>
+            <descriptorRef>jar-with-dependencies</descriptorRef>
+          </descriptorRefs>
+        </configuration>
+        <executions>
+          <execution>
+            <id>make-assembly</id> <!-- this is used for inheritance merges -->
+            <phase>package</phase> <!-- bind to the packaging phase -->
+            <goals>
+              <goal>single</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -46,13 +64,6 @@
       </plugin>
     </plugins>
   </build>
-
-  <properties>
-    <nd4j.version>1.0.0-beta</nd4j.version>
-    <dl4j.version>1.0.0-beta</dl4j.version>
-    <datavec.version>1.0.0-beta</datavec.version>
-    <zemberek.version>0.15.0</zemberek.version>
-  </properties>
 
   <dependencies>
     <!--logger-->
@@ -77,7 +88,6 @@
       <artifactId>nd4j-native-platform</artifactId>
       <version>${nd4j.version}</version>
     </dependency>
-
     <!--zemberek for preprocessing-->
     <dependency>
       <groupId>zemberek-nlp</groupId>
@@ -100,5 +110,29 @@
       <version>4.8.1</version>
       <scope>test</scope>
     </dependency>
+    <!--JLine for CLI-->
+    <dependency>
+      <groupId>org.jline</groupId>
+      <artifactId>jline</artifactId>
+      <version>3.6.1</version>
+    </dependency>
+    <dependency>
+      <groupId>org.fusesource.jansi</groupId>
+      <artifactId>jansi</artifactId>
+      <version>1.17</version> <!-- JLine 3.6.1 uses 1.17; needed to display ansi in Windows cmd -->
+    </dependency>
+    <dependency>
+      <groupId>net.java.dev.jna</groupId>
+      <artifactId>jna</artifactId>
+      <version>4.2.2</version> <!-- JLine 3.6.1 uses 4.2.2; needed to create a JLine system terminal -->
+    </dependency>
   </dependencies>
+
+  <repositories>
+    <repository>
+      <id>ahmetaa-repo</id>
+      <name>ahmetaa Maven Repo on Github</name>
+      <url>https://raw.github.com/ahmetaa/maven-repo/master</url>
+    </repository>
+  </repositories>
 </project>

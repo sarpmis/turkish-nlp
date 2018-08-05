@@ -14,7 +14,6 @@ import org.deeplearning4j.text.sentenceiterator.BasicLineIterator;
 import org.deeplearning4j.text.sentenceiterator.SentenceIterator;
 import org.deeplearning4j.text.tokenization.tokenizerfactory.DefaultTokenizerFactory;
 import org.deeplearning4j.text.tokenization.tokenizerfactory.TokenizerFactory;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.io.File;
@@ -25,31 +24,6 @@ import java.util.Collection;
 
 @Slf4j
 public class Word2VecInitializer {
-
-//    public static Word2Vec initializeModel(String pathToDict){
-//        File dictFile = Paths.get(pathToDict).toFile();
-//
-//        try {
-//            SentenceIterator iterator = new BasicLineIterator(dictFile);
-//            TokenizerFactory tokenizer = new DefaultTokenizerFactory();
-//            log.info("Building model....");
-//            Word2Vec model = new Word2Vec.Builder()
-//                    .minWordFrequency(1)
-//                    .iterations(1)
-//                    .layerSize(100)
-//                    .seed(42)
-//                    .windowSize(5)
-//                    .iterate(iterator)
-//                    .tokenizerFactory(tokenizer)
-//                    .build();
-//            log.info("Fitting Word2Vec model....");
-//            model.buildVocab();
-//            return model;
-//        } catch (IOException e) {
-//            log.error("Dictionary not found...");
-//            return null;
-//        }
-//    }
 
     public static Word2Vec initializeModel(@NonNull String pathToDict) {
         log.info("Initializing Word2Vec model...");

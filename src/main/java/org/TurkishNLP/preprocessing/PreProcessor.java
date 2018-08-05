@@ -20,8 +20,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public class PreProcessor {
 
-    protected TurkishMorphology morphology;
-    protected TurkishSentenceExtractor extractor;
+    private TurkishMorphology morphology;
+    private TurkishSentenceExtractor extractor;
 
     public PreProcessor() throws IOException {
         morphology = TurkishMorphology.createWithDefaults();
@@ -36,11 +36,9 @@ public class PreProcessor {
         Path outPath = Paths.get(System.getProperty("user.dir"), "data", "processed_files",
                 Paths.get(filepath).getFileName().toString().split("\\.")[0] + ".processed");
         if (outPath.toFile().exists()) {
-            Files.delete(outPath);
-            log.info("A processed file for " + filepath + " already exists, overwriting");
+            log.info("A processed file for " + filepath + " already exists, aborting");
+            return;
         }
-
-
 
         // Use a buffer to avoid using too much mem. use 10mb
         WriteBuffer buffer = new WriteBuffer(outPath, 10000);
@@ -70,7 +68,7 @@ public class PreProcessor {
         }
         buffer.finish();
         Timer.endTimer();
-        log.info("Finished processing file +  " + filepath);
+        log.info("Finished processing file " + filepath);
         log.info("Processed " + lineCount + " lines in " + Timer.results());
     }
 
@@ -114,7 +112,7 @@ public class PreProcessor {
      * Returns Zemberek root dictionary as an ArrayList<String> made up
      * of dictionary item id's
      */
-    private ArrayList<String> getDictionary() {
+    public ArrayList<String> getDictionary() {
         ArrayList<String> list = new ArrayList<>();
         morphology.getLexicon().iterator().forEachRemaining(item -> list.add(item.id));
         return list;
@@ -151,11 +149,8 @@ public class PreProcessor {
     // ****************************** USED FOR TESTING ****************************** \\
     public static void main ( String[] args) throws IOException {
         PreProcessor pp = new PreProcessor();
-//        PreProcessor.processFile("src\\main\\java\\org\\TurkishNLP\\preprocessing\\sample_texts\\short.txt", morphology, extractor);
-//        PreProcessor.processFile("C:\\Dev\\nim_programs\\wiki2text\\trwiki.txt", morpho
-// y, extractor);
 //        pp.processFile("data\\corpora\\tr_corpus.txt");
-        pp.processFile("data\\corpora\\short.txt");
+        pp.processFile("data\\corpora\\corpus.txt");
 //        System.out.println(pp.analyzeSentence("Nevşehir'deki mitingin ardından Adıyaman'a geçerek yurttaşlarla bir araya geldi."));
     }
 }
