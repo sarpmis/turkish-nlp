@@ -38,60 +38,70 @@ public class Shell {
         while ((line = readLine(reader, "")) != null) {
             ParsedLine pl = reader.getParser().parse(line, 0);
             String command = pl.word();
-            if (command.equals("help")) {
-                printHelp();
-            } else if (command.equals("model")) {
-                if (pl.words().size() < 2) {
-                    if(w == null) System.out.println(ShellConstants.NO_MODEL_ERROR_MESSAGE);
-                } else {
-                    String secondCommand = pl.words().get(1);
-                    switch (secondCommand) {
-                        case "read":
-                            if(pl.words().size() != 3) {
-                                printGeneralError();
-                            } else {
-                                String modelName = pl.words().get(2);
-                                w = Word2VecOperations.readModel(modelName);
-                                System.out.println();
-                            }
-                            break;
-                        case "save":
-                        case "closest":
-                            if(pl.words().size() != 4) {
-                                printGeneralError();
-                            } else if (w == null) {
-                                printNoModelError();
-                            } else {
-                                String thirdCommand = pl.words().get(2);
-                                String fourthCommand = pl.words().get(3);
-                                if (!thirdCommand.matches("\\d+")) {
+            switch(command) {
+                case "help":
+                    printHelp();
+                    break;
+                case "model":
+                    if (pl.words().size() < 2) {
+                        if(w == null) System.out.println(ShellConstants.NO_MODEL_ERROR_MESSAGE);
+                    } else {
+                        String secondCommand = pl.words().get(1);
+                        switch (secondCommand) {
+                            case "read":
+                                if(pl.words().size() != 3) {
                                     printGeneralError();
                                 } else {
-                                    Word2VecOperations.printClosest(w, fourthCommand, Integer.parseInt(thirdCommand));
+                                    String modelName = pl.words().get(2);
+                                    w = Word2VecOperations.readModel(modelName);
                                     System.out.println();
                                 }
-                            }
-                            break;
-                        case "sim":
-                            if(pl.words().size() != 4) {
-                                printGeneralError();
-                            } else if (w == null) {
-                                printNoModelError();
-                            } else {
-                                System.out.println("TODO");
-                            }
-                            break;
+                                break;
+                            case "save":
+                            case "closest":
+                                if(pl.words().size() != 4) {
+                                    printGeneralError();
+                                } else if (w == null) {
+                                    printNoModelError();
+                                } else {
+                                    String thirdCommand = pl.words().get(2);
+                                    String fourthCommand = pl.words().get(3);
+                                    if (!thirdCommand.matches("\\d+")) {
+                                        printGeneralError();
+                                    } else {
+                                        Word2VecOperations.printClosest(w, fourthCommand, Integer.parseInt(thirdCommand));
+                                        System.out.println();
+                                    }
+                                }
+                                break;
+                            case "sim":
+                                if(pl.words().size() != 4) {
+                                    printGeneralError();
+                                } else if (w == null) {
+                                    printNoModelError();
+                                } else {
+                                    System.out.println("TODO");
+                                }
+                                break;
+                        }
+                        if(secondCommand.equals("read")){
+
+                        } else if(secondCommand.equals("save")){
+
+                        } else if(secondCommand.equals("closest")){
+
+                        } else if(secondCommand.equals("sim")) {
+
+                        }
                     }
-                    if(secondCommand.equals("read")){
+                    break;
+                case "corpus":
 
-                    } else if(secondCommand.equals("save")){
+            }
+            if (command.equals("help")) {
 
-                    } else if(secondCommand.equals("closest")){
+            } else if (command.equals("model")) {
 
-                    } else if(secondCommand.equals("sim")) {
-
-                    }
-                }
             } else {
                 printGeneralError();
             }
