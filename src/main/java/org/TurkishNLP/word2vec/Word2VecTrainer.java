@@ -27,24 +27,14 @@ public class Word2VecTrainer {
     }
 
     public static void trainModel(Word2Vec model, String trainingFilePath){
-        File trainingFile = Paths.get(trainingFilePath).toFile();
         try {
+            File trainingFile = Paths.get(trainingFilePath).toFile();
             SentenceIterator iterator = new BasicLineIterator(trainingFile);
             TokenizerFactory tokenizer = new DefaultTokenizerFactory();
             trainModel(model, iterator, tokenizer);
         } catch (IOException e) {
             log.error("Training file not found...");
-            return;
         }
     }
 
-
-    public static void main(String[] args) throws Exception {
-        Word2Vec model = Word2VecOperations.readModel("test");
-        Word2VecTrainer.trainModel(model,
-                Paths.get(System.getProperty("user.dir"), "data",
-                        "processed_files","trwiki.processed2").toString());
-        Collection<String> lst = model.wordsNearest("tarih_Noun", 10);
-        log.info("Closest words to 'tarih' on 2nd run: " + lst);
-    }
 }

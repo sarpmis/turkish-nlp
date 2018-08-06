@@ -28,6 +28,7 @@ public class Word2VecInitializer {
     public static Word2Vec initializeModel(@NonNull String pathToDict) {
         log.info("Initializing Word2Vec model...");
 
+        // create iterator for dictionary
         File dictFile = Paths.get(pathToDict).toFile();
         SentenceIterator iterator;
         try { iterator = new BasicLineIterator(dictFile); }

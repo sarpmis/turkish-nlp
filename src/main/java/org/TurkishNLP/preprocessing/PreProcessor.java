@@ -5,11 +5,13 @@ import zemberek.morphology.TurkishMorphology;
 import zemberek.morphology.analysis.SentenceAnalysis;
 import zemberek.morphology.analysis.SingleAnalysis;
 import zemberek.morphology.analysis.WordAnalysis;
+import zemberek.morphology.lexicon.DictionaryItem;
 import zemberek.tokenization.TurkishSentenceExtractor;
 import zemberek.core.turkish.PrimaryPos;
 import org.apache.commons.lang3.StringUtils;
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -28,13 +30,55 @@ public class PreProcessor {
         extractor = TurkishSentenceExtractor.DEFAULT;
     }
 
+    public String removeUnwantedCharacters(String str){
+        // only alphanumeric characters, whitespace or sentence-ending punctuation
+        str = str.replaceAll("[^\\p{L}\\s\\p{N}.,?!']", " ");
+        // remove single letter/number words that may be floating around
+        str = str.replaceAll("(\\s[\\pL\\pN][\\s\\.\\?!,])", " ");
+        str = removeExtraSpaces(str);
+        return str;
+    }
+
+    public String removeExtraSpaces(String str) {
+        return str
+                .trim()
+                .replaceAll(" +", " ")
+                .replaceAll("\n+", "\n")
+                .replaceAll("(\n )", "\n");
+        // TODO: remove extra spaces near punctuation
+    }
+
+    public List<DictionaryItem> analyzeSentence(String s) {
+        List<DictionaryItem> lst = new ArrayList<>();
+
+        List<WordAnalysis> analyses = morphology.analyzeSentence(s);
+
+        // Can't include words that zemberek can't find in the dictionary
+        // or else disambiguate breaks
+        // THIS SEEMS TO BE FIXED IN 0.15
+        // analyses.removeIf(a -> a.analysisCount() == 0);
+
+//        try {
+        SentenceAnalysis result = morphology.disambiguate(s, analyses);
+
+        // Build a list from the output of disambiguate.
+        for (SingleAnalysis sa : result.bestAnalysis()) {
+            lst.add(sa.getDictionaryItem());
+        }
+//
+//        } catch(IllegalArgumentException e){
+//            log.info("No dictionary items found for sentence = " + s);
+//        }
+        return lst;
+    }
+
     public void processFile(String filepath) throws IOException {
-        log.info("Starting process");
-        long lineCount = 0;
+        log.info("Starting processing file " + filepath);
+        long lineCount = 0, tokenCount = 0;
         Timer.setTimer();
 
         Path outPath = Paths.get(System.getProperty("user.dir"), "data", "processed_files",
-                Paths.get(filepath).getFileName().toString().split("\\.")[0] + ".processed");
+                Paths.get(filepath).getFileName().toString().split("\\.")[0] + ".processed2");
         if (outPath.toFile().exists()) {
             log.info("A processed file for " + filepath + " already exists, aborting");
             return;
@@ -45,23 +89,21 @@ public class PreProcessor {
 
         // Reading file line by line.
         Scanner sc = new Scanner(new File(filepath),"UTF-8");
-        String currentLine, lastSentence = "";
+        String currentLine;
         while(sc.hasNextLine()){
             currentLine = sc.nextLine();
-            // If last sentence on previous line wrapped to this line
-            // prepend that (half) sentence to currentLine.
-            if (!lastSentence.matches(".*\\p{Punct}")) {
-                currentLine = lastSentence + " " + currentLine;
-            }
+
             // Extract sentences from current line.
             List<String> sentences = extractor.fromParagraph(currentLine);
-            if(sentences.size()>0) lastSentence = sentences.get(sentences.size()-1);
-            else lastSentence = "";
-
-            sentences = cleanSentences(sentences);
 
             for(String s : sentences){
-                analyzeSentence(s).stream().forEach(word -> buffer.add(word + " "));
+                buffer.add(s + " #");
+                for(DictionaryItem item : analyzeSentence(s)){
+                    if(item.primaryPos.equals(PrimaryPos.Punctuation)) {
+                        buffer.add(" " + item.id);
+                        tokenCount++;
+                    }
+                }
                 buffer.add(System.lineSeparator());
                 lineCount++;
             }
@@ -69,88 +111,13 @@ public class PreProcessor {
         buffer.finish();
         Timer.endTimer();
         log.info("Finished processing file " + filepath);
-        log.info("Processed " + lineCount + " lines in " + Timer.results());
-    }
-
-    /*
-     * Filter out sentences that don't end in punctuation,
-     * remove everything that is not a letter or whitespace
-     */
-    private static List<String> cleanSentences(List<String> sentences){
-        List<String> result = sentences.stream()
-                .filter(s -> s.matches(".*\\p{Punct}"))
-                .map(s -> s.replaceAll("[^\\p{L}\\s]", ""))
-                .collect(Collectors.toList());
-        result.removeIf(s -> StringUtils.isBlank(s));
-        return result;
-    }
-
-    /*
-     * Creates a dictionary file that contains the id for each
-     * item in the dictionary in a separate line.
-     */
-    public void processDictionary(String outputPath) throws IOException {
-        // Delete the file if it exists
-        Path outPath = Paths.get(outputPath);
-        if (outPath.toFile().exists()) {
-            Files.delete(outPath);
-        }
-        // Build string
-        final StringJoiner joiner = new StringJoiner("\n");
-        morphology.getLexicon().iterator().forEachRemaining(item -> {
-            // Filter punctuation
-            if (!item.primaryPos.equals(PrimaryPos.Punctuation)) joiner.add(item.id);
-        });
-        // Write to file
-        Files.write(outPath, joiner.toString().getBytes(),
-                StandardOpenOption.CREATE, StandardOpenOption.APPEND);
-
-        log.info("Processed dictionary");
-    }
-
-    /*
-     * Returns Zemberek root dictionary as an ArrayList<String> made up
-     * of dictionary item id's
-     */
-    public ArrayList<String> getDictionary() {
-        ArrayList<String> list = new ArrayList<>();
-        morphology.getLexicon().iterator().forEachRemaining(item -> list.add(item.id));
-        return list;
-    }
-
-
-    public List<String> analyzeSentence(String s){
-        List<String> lst = new ArrayList<>();
-
-        // Only letters and whitespaces
-        s = s.replaceAll("[^\\p{L}\\s]", "");
-
-        List<WordAnalysis> analyses = morphology.analyzeSentence(s);
-
-        // Can't include words that zemberek can't find in the dictionary
-        // or else disambiguate breaks
-        analyses.removeIf(a -> a.analysisCount() == 0);
-
-        try {
-            SentenceAnalysis result = morphology.disambiguate(s, analyses);
-
-            // Build a list from the output of disambiguate.
-            for (SingleAnalysis sa : result.bestAnalysis()) {
-                lst.add(sa.getDictionaryItem().id);
-            }
-
-        } catch(IllegalArgumentException e){
-            log.info("No dictionary items found for sentence = " + s);
-        }
-        return lst;
+        log.info("Processed " + lineCount + " lines and " + tokenCount + " tokens in " + Timer.results());
     }
 
 
     // ****************************** USED FOR TESTING ****************************** \\
     public static void main ( String[] args) throws IOException {
-        PreProcessor pp = new PreProcessor();
-//        pp.processFile("data\\corpora\\tr_corpus.txt");
-        pp.processFile("data\\corpora\\corpus.txt");
 //        System.out.println(pp.analyzeSentence("Nevşehir'deki mitingin ardından Adıyaman'a geçerek yurttaşlarla bir araya geldi."));
+        PreProcessor pp = new PreProcessor();
     }
 }
