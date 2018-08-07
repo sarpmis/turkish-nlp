@@ -1,6 +1,8 @@
 package org.TurkishNLP.preprocessing;
 
 import lombok.extern.slf4j.Slf4j;
+import org.TurkishNLP.shared.Timer;
+import org.TurkishNLP.shared.WriteBuffer;
 import zemberek.morphology.TurkishMorphology;
 import zemberek.morphology.analysis.SentenceAnalysis;
 import zemberek.morphology.analysis.SingleAnalysis;
@@ -8,16 +10,12 @@ import zemberek.morphology.analysis.WordAnalysis;
 import zemberek.morphology.lexicon.DictionaryItem;
 import zemberek.tokenization.TurkishSentenceExtractor;
 import zemberek.core.turkish.PrimaryPos;
-import org.apache.commons.lang3.StringUtils;
+
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Slf4j
 public class PreProcessor {
@@ -30,23 +28,6 @@ public class PreProcessor {
         extractor = TurkishSentenceExtractor.DEFAULT;
     }
 
-    public String removeUnwantedCharacters(String str){
-        // only alphanumeric characters, whitespace or sentence-ending punctuation
-        str = str.replaceAll("[^\\p{L}\\s\\p{N}.,?!']", " ");
-        // remove single letter/number words that may be floating around
-        str = str.replaceAll("(\\s[\\pL\\pN][\\s\\.\\?!,])", " ");
-        str = removeExtraSpaces(str);
-        return str;
-    }
-
-    public String removeExtraSpaces(String str) {
-        return str
-                .trim()
-                .replaceAll(" +", " ")
-                .replaceAll("\n+", "\n")
-                .replaceAll("(\n )", "\n");
-        // TODO: remove extra spaces near punctuation
-    }
 
     public List<DictionaryItem> analyzeSentence(String s) {
         List<DictionaryItem> lst = new ArrayList<>();
@@ -58,60 +39,73 @@ public class PreProcessor {
         // THIS SEEMS TO BE FIXED IN 0.15
         // analyses.removeIf(a -> a.analysisCount() == 0);
 
-//        try {
         SentenceAnalysis result = morphology.disambiguate(s, analyses);
 
         // Build a list from the output of disambiguate.
         for (SingleAnalysis sa : result.bestAnalysis()) {
             lst.add(sa.getDictionaryItem());
         }
-//
-//        } catch(IllegalArgumentException e){
-//            log.info("No dictionary items found for sentence = " + s);
-//        }
         return lst;
     }
 
-    public void processFile(String filepath) throws IOException {
-        log.info("Starting processing file " + filepath);
-        long lineCount = 0, tokenCount = 0;
-        Timer.setTimer();
-
-        Path outPath = Paths.get(System.getProperty("user.dir"), "data", "processed_files",
-                Paths.get(filepath).getFileName().toString().split("\\.")[0] + ".processed2");
-        if (outPath.toFile().exists()) {
-            log.info("A processed file for " + filepath + " already exists, aborting");
-            return;
-        }
-
-        // Use a buffer to avoid using too much mem. use 10mb
-        WriteBuffer buffer = new WriteBuffer(outPath, 10000);
-
-        // Reading file line by line.
-        Scanner sc = new Scanner(new File(filepath),"UTF-8");
+    public long[] analyzeAndWrite(Scanner sc, WriteBuffer buffer) {
+        long sentenceCount = 0, tokenCount = 0;
         String currentLine;
         while(sc.hasNextLine()){
             currentLine = sc.nextLine();
 
             // Extract sentences from current line.
+            // wiki dumps do not have sentences that wrap onto different lines.
+            // but they do have multiple sentences in a single line
+            // TODO: double check this ^ and make wrapped sentences work as well
             List<String> sentences = extractor.fromParagraph(currentLine);
 
             for(String s : sentences){
                 buffer.add(s + " #");
                 for(DictionaryItem item : analyzeSentence(s)){
-                    if(item.primaryPos.equals(PrimaryPos.Punctuation)) {
-                        buffer.add(" " + item.id);
+                    if(!item.primaryPos.equals(PrimaryPos.Punctuation)) {
+                        buffer.add(" " + item.getId());
                         tokenCount++;
                     }
                 }
                 buffer.add(System.lineSeparator());
-                lineCount++;
+                sentenceCount++;
             }
         }
         buffer.finish();
+        sc.close();
+        return new long[] {sentenceCount, tokenCount};
+    }
+
+    public void processFile(String filepath) {
+        Path outPath = Paths.get(System.getProperty("user.dir"), "data", "processed_files",
+                Paths.get(filepath).getFileName().toString().split("\\.")[0] + ".processed3");
+        if (outPath.toFile().exists()) {
+            log.info("A processed file for " + filepath + " already exists, aborting...");
+            return;
+        }
+
+        log.info("Starting processing file " + filepath);
+
+        Timer.setTimer();
+        log.info("Cleaning the text in memory...");
+
+        String cleaned = Cleaner.cleanFileInMemory(filepath);
+        if (cleaned == null) return;
+
+        log.info("Completed cleaning text...");
+        log.info("Beginning analysis...");
+        // Use a buffer to avoid using too much mem. use 10mb
+        WriteBuffer buffer = new WriteBuffer(outPath, 10000);
+
+        // Reading file line by line.
+        Scanner sc = new Scanner(cleaned);
+
+        long[] analysisCounts = analyzeAndWrite(sc, buffer);
+
         Timer.endTimer();
         log.info("Finished processing file " + filepath);
-        log.info("Processed " + lineCount + " lines and " + tokenCount + " tokens in " + Timer.results());
+        log.info("Processed {} sentences and {} tokens in " + Timer.results(), analysisCounts[0], analysisCounts[1]);
     }
 
 
@@ -119,5 +113,6 @@ public class PreProcessor {
     public static void main ( String[] args) throws IOException {
 //        System.out.println(pp.analyzeSentence("Nevşehir'deki mitingin ardından Adıyaman'a geçerek yurttaşlarla bir araya geldi."));
         PreProcessor pp = new PreProcessor();
+        pp.processFile("data\\corpora\\medium_corpus.txt");
     }
 }

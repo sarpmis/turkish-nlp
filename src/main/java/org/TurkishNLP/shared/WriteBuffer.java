@@ -1,4 +1,4 @@
-package org.TurkishNLP.preprocessing;
+package org.TurkishNLP.shared;
 
 import java.io.IOException;
 import java.nio.file.Files;

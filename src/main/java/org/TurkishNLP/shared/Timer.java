@@ -1,4 +1,4 @@
-package org.TurkishNLP.preprocessing;
+package org.TurkishNLP.shared;
 
 public class Timer {
     private static long startTime, endTime;
