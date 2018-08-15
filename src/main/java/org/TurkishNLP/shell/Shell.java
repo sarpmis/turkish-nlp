@@ -109,7 +109,6 @@ public class Shell {
         AnsiConsole.systemUninstall();
     }
 
-
     private void printHelp() {
         System.out.println(ShellConstants.HELP_MESSAGE);
     }

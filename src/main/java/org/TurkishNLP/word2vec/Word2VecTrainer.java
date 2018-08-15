@@ -9,11 +9,27 @@ import org.deeplearning4j.text.tokenization.tokenizerfactory.TokenizerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
 
 @Slf4j
 public class Word2VecTrainer {
+
+    public static void trainModel(Word2Vec model, String trainingFilePath){
+        trainModel(model, Paths.get(trainingFilePath));
+    }
+
+    public static void trainModel(Word2Vec model, Path trainingFilePath){
+        try {
+            File trainingFile = trainingFilePath.toFile();
+            SentenceIterator iterator = new BasicLineIterator(trainingFile);
+            TokenizerFactory tokenizer = new DefaultTokenizerFactory();
+            trainModel(model, iterator, tokenizer);
+        } catch (IOException e) {
+            log.error("Training file not found...");
+        }
+    }
 
     /*
      * Trains existing Word2Vec model with given iterator and tokenizer.
@@ -25,16 +41,4 @@ public class Word2VecTrainer {
         log.info("Fitting Word2Vec model");
         model.fit();
     }
-
-    public static void trainModel(Word2Vec model, String trainingFilePath){
-        try {
-            File trainingFile = Paths.get(trainingFilePath).toFile();
-            SentenceIterator iterator = new BasicLineIterator(trainingFile);
-            TokenizerFactory tokenizer = new DefaultTokenizerFactory();
-            trainModel(model, iterator, tokenizer);
-        } catch (IOException e) {
-            log.error("Training file not found...");
-        }
-    }
-
 }

@@ -7,6 +7,7 @@ import org.deeplearning4j.models.word2vec.Word2Vec;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Collection;
 
 @Slf4j
@@ -50,5 +51,19 @@ public class Word2VecOperations {
     public static void printClosest(Word2Vec model, String word, int top){
         Collection<String> closest = model.wordsNearest(word, top);
         log.info("Closest words to" + "'" + word + "' : " + closest);
+    }
+
+    public static Collection<String> getClosest(Word2Vec model, String word, int top) {
+        return model.wordsNearest(word, top);
+    }
+
+    public static void main(String[] args) {
+        String word = "futbol_Noun";
+        Word2Vec model = readModel("trimmed_dictionary");
+//        System.out.println(model.getWordVectorMatrix(word));
+        System.out.println(model.getModelUtils()
+                .wordsNearest(
+                        Arrays.asList("mutlu_Adj", "olumsuz_Adj"), Arrays.asList("mutsuz_Adj"), 10)
+        );
     }
 }

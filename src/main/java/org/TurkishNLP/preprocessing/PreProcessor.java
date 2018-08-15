@@ -145,11 +145,26 @@ public class PreProcessor {
         log.info("Finished processing file " + filepath);
         log.info("Processed {} sentences and {} tokens in " + Timer.results(), analysisCounts[0], analysisCounts[1]);
     }
-q
+
+    // Regex to match any token that contains numbers followed by _Num
+    public String removeProcessedNumbers(String str) {
+        return str.replaceAll("[\\s\\n]?\\pN*\\.?\\pN*_Num\\S*\\s", " " + DictionaryItem.UNKNOWN.getId() + " ");
+    }
+
+    public void removeProcessedNumbersOnDisk(Path filepath, Path outpath) throws IOException {
+        Scanner sc = new Scanner(filepath);
+        PrintWriter pw = new PrintWriter(outpath.toFile());
+        String line;
+        while(sc.hasNextLine()) {
+            line = sc.nextLine();
+            pw.println(removeProcessedNumbers(line) );
+        }
+    }
+
     // ****************************** USED FOR TESTING ****************************** \\
     public static void main ( String[] args) throws IOException {
 //        System.out.println(pp.analyzeSentence("Nevşehir'deki mitingin ardından Adıyaman'a geçerek yurttaşlarla bir araya geldi."));
-        PreProcessor pp = new PreProcessor();
-        pp.processFile("data\\corpora\\medium_corpus.txt", false);
+//        PreProcessor pp = new PreProcessor();
+//        pp.processFile("data\\corpora\\trwiki_corpus.txt", false);
     }
 }
