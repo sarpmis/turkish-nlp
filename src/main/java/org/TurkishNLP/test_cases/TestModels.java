@@ -5,11 +5,12 @@ import org.TurkishNLP.word2vec.Word2VecParams;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /*
  * This file contains Word2VecParams objects for each test case
  */
-public class TestModels {
+class TestModels {
     protected Word2VecParams test1;
     protected Word2VecParams test2;
     protected Word2VecParams test3;
@@ -18,7 +19,7 @@ public class TestModels {
 
     protected Collection<Word2VecParams> tests = new ArrayList();
 
-    public TestModels() {
+    protected TestModels() {
         test1 = new Word2VecParams("epochs_2");
         test1.setNumEpochs(2);
         tests.add(test1);
@@ -41,12 +42,18 @@ public class TestModels {
     }
 
     // sets the corpus path for all tests
-    public void setCorpus(Path corpusPath) {
+    protected void setCorpus(Path corpusPath) {
         tests.forEach(p -> p.setCorpusPath(corpusPath));
     }
 
     // sets the dictionary path for all tests
-    public void setDictionary(Path dictionaryPath) {
+    protected void setDictionary(Path dictionaryPath) {
         tests.forEach(p -> p.setDictionaryPath(dictionaryPath));
+    }
+
+    protected List<String> getModelNames() {
+        List<String> l = new ArrayList<>();
+        tests.forEach(t -> l.add(t.getName()));
+        return l;
     }
 }

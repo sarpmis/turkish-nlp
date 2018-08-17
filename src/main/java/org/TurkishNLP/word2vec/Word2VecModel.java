@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
+import java.util.List;
 
 /*
  * A wrapper that holds a Word2Vec and some extra info
@@ -60,14 +61,18 @@ public class Word2VecModel {
         return modelName;
     }
 
-    // VECTOR OPERATIONS
+    // WORD OPERATIONS
     public Collection<String> getClosest(@NonNull String word, @NonNull int top) {
         return w.wordsNearest(word, top);
     }
 
+    public Collection<String> getClosest(List<String> positive, List<String> negative, int top) {
+        return w.wordsNearestSum(positive, negative, top);
+    }
     public double getSimilarity(@NonNull  String word1, @NonNull String word2) {
         return w.similarity(word1, word2);
     }
+
 
     /*
      * Reads a Word2Vec file and returns a Word2VecModel for it

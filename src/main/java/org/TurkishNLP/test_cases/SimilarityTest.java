@@ -2,7 +2,6 @@ package org.TurkishNLP.test_cases;
 
 import org.TurkishNLP.word2vec.Word2VecModel;
 
-import java.util.Collection;
 import java.util.Map;
 
 /*
