@@ -6,10 +6,15 @@ import org.TurkishNLP.word2vec.Word2VecParams;
 import org.TurkishNLP.word2vec.Word2VecTrainer;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.Scanner;
 
 @Slf4j
 public class Tester {
@@ -24,8 +29,23 @@ public class Tester {
                 System.getProperty("user.dir"), "data", "processed_files", "medium_corpus.processed2"));
     }
 
-    public void readTests(File target) {
+    // Reads tests from file
+    public static List<Test> readTests(File target) throws FileNotFoundException {
+        List<Test> tests = new ArrayList<>();
+        Scanner sc = new Scanner(target);
+        String line;
+        while(sc.hasNextLine()) {
+            line = sc.nextLine();
+            if(line.startsWith("%") || line.isEmpty()) continue;
+            Test t = Test.parseTest(line);
+            if(t == null) log.error("Can't parse test from line " + line);
+            else tests.add(t);
+        }
+        return tests;
+    }
 
+    public static List<Test> readTests(String filePath) throws FileNotFoundException {
+        return readTests(Paths.get(filePath).toFile());
     }
 
     public void trainTestModels() {
@@ -41,15 +61,16 @@ public class Tester {
     }
 
     public void runTestsOnModel(Word2VecModel model, Collection<Test> tests, PrintWriter out) {
-        out.println("**** Tests for model: " + model + " ****");
+        out.println("**** Tests for model: " + model + " ****" + System.lineSeparator());
         tests.forEach(t -> {
             t.run(model);
-            out.println(t.results());
+            out.println(t.results() + System.lineSeparator());
         });
+        out.flush();
     }
 
     // In memory implementation
-    public void runTestsOnMultipleModels(Collection<Word2VecModel> models, Collection<Test> tests, PrintWriter out) {
+    public void runTestsOnModels(Collection<Word2VecModel> models, Collection<Test> tests, PrintWriter out) {
         models.forEach(m -> runTestsOnModel(m, tests, out));
     }
 
@@ -65,13 +86,22 @@ public class Tester {
     }
 
     // trains test models and then runs tests on disk
-    public void trainAndRunTest(Collection<Test> tests, PrintWriter out) {
-        trainTestModels();
-        runTestsOnDisk(cases.getModelNames(), tests, out);
+    public void readAndRunTests(String testFilePath, String outPath) {
+        try {
+            PrintWriter out = new PrintWriter(outPath);
+            List<Test> tests = this.readTests(Paths.get(testFilePath).toFile());
+            runTestsOnDisk(cases.getModelNames(), tests, out);
+        } catch(FileNotFoundException e) {
+            log.error("Test file not found at: " + testFilePath);
+        }
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         Tester testy = new Tester();
         testy.trainTestModels();
+//        PrintWriter printy = new PrintWriter("data\\testing\\out.txt");
+//        testy.runTestsOnModel(Word2VecModel.readModel("trimmed_dictionary"),
+//                Tester.readTests("data\\testing\\basic_tests.txt"), printy);
+//        testy.readAndRunTests("data\\testing\\basic_tests.txt", "data\\testing\\out.txt");
     }
 }

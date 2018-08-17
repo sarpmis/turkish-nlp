@@ -32,20 +32,23 @@ public class Word2VecParams {
         this.name = name;
     }
 
-    public void setName(String name){
+    public Word2VecParams setName(String name){
         this.name = name;
+        return this;
     }
 
     public String getName() {
         return name;
     }
 
-    public void setDictionaryPath(Path dictionaryPath) {
+    public Word2VecParams setDictionaryPath(Path dictionaryPath) {
         this.dictionaryPath = dictionaryPath;
+        return this;
     }
 
-    public void setCorpusPath(Path corpusPath) {
+    public Word2VecParams setCorpusPath(Path corpusPath) {
         this.corpusPath = corpusPath;
+        return this;
     }
 
     public Path getDictionaryPath() {
@@ -65,36 +68,44 @@ public class Word2VecParams {
     }
 
     // HYPERPARAMETER SETTING
-    public void setLearningRate(Double learningRate) {
+    public Word2VecParams setLearningRate(Double learningRate) {
         this.learningRate = learningRate;
+        return this;
     }
 
-    public void setMinLearningRate(Double minLearningRate) {
+    public Word2VecParams setMinLearningRate(Double minLearningRate) {
         this.minLearningRate = minLearningRate;
+        return this;
     }
 
-    public void setSubSampling(Double subSampling) {
+    public Word2VecParams setSubSampling(Double subSampling) {
         this.subSampling = subSampling;
+        return this;
     }
 
-    public void setLayerSize(Integer layerSize) {
+    public Word2VecParams setLayerSize(Integer layerSize) {
         this.layerSize = layerSize;
+        return this;
     }
 
-    public void setNumEpochs(Integer numEpochs) {
+    public Word2VecParams setNumEpochs(Integer numEpochs) {
         this.numEpochs = numEpochs;
+        return this;
     }
 
-    public void setWindowSize(Integer windowSize) {
+    public Word2VecParams setWindowSize(Integer windowSize) {
         this.windowSize = windowSize;
+        return this;
     }
 
-    public void setBatchSize(Integer batchSize) {
+    public Word2VecParams setBatchSize(Integer batchSize) {
         this.batchSize = batchSize;
+        return this;
     }
 
-    public void setIterations(Integer iterations) {
+    public Word2VecParams setIterations(Integer iterations) {
         this.iterations = iterations;
+        return this;
     }
 
     // HYPERPARAM GETTING

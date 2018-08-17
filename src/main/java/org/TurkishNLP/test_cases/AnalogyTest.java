@@ -30,17 +30,18 @@ public class AnalogyTest implements Test {
                 .stream()
                 .collect(Collectors.toList());
 
-        StringBuilder b = new StringBuilder();
+        StringBuilder builder = new StringBuilder();
         int index = results.indexOf(d);
-        b.append("Test:" + a + " is to " + b + " as " + c + " is to (" + d + ")?" + System.lineSeparator());
-        b.append("Expected word " + d + " is the top " + index + " closest word" + System.lineSeparator());
-        b.append("  List of " + top + " closest words = ");
+        builder.append("Test: " + a + " is to " + b + " as " + c + " is to (" + d + ")?" + System.lineSeparator());
+        builder.append("Expected word " + d + " is the top " + index + " closest word" + System.lineSeparator());
+        builder.append("  List of " + top + " closest words = ");
+        results.removeAll(Arrays.asList(a,b,c));
         for(int i = 0; i < top; i++) {
             String word = results.get(i);
-            b.append(i + ": " + word + " ");
+            builder.append(i + ": " + word + " ");
         }
-        b.append(System.lineSeparator());
-        res = b.toString();
+        builder.append(System.lineSeparator());
+        res = builder.toString();
     }
 
     public String results() {
