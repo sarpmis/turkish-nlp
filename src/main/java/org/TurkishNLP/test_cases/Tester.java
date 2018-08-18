@@ -26,7 +26,7 @@ public class Tester {
         cases.setDictionary(Paths.get(
                 System.getProperty("user.dir"), "data", "dictionaries", "remaining.dict"));
         cases.setCorpus(Paths.get(
-                System.getProperty("user.dir"), "data", "processed_files", "medium_corpus.processed2"));
+                System.getProperty("user.dir"), "data", "processed_files", "trwiki_corpus.processed"));
     }
 
     // Reads tests from file
@@ -98,10 +98,17 @@ public class Tester {
 
     public static void main(String[] args) throws IOException {
         Tester testy = new Tester();
-        testy.trainTestModels();
+//        testy.trainTestModels();
 //        PrintWriter printy = new PrintWriter("data\\testing\\out.txt");
 //        testy.runTestsOnModel(Word2VecModel.readModel("trimmed_dictionary"),
 //                Tester.readTests("data\\testing\\basic_tests.txt"), printy);
-//        testy.readAndRunTests("data\\testing\\basic_tests.txt", "data\\testing\\out.txt");
+        testy.readAndRunTests("data\\testing\\basic_tests.txt", "data\\testing\\out.txt");
+//            Word2VecModel.readModel("5epoch_250layer_00025learning");
+//        Word2VecModel model = Word2VecModel.initializeWithParams(testy.cases.test6);
+//        log.info("Starting training model: {}", model);
+//        Word2VecTrainer.trainModel(model.getWord2Vec(), testy.cases.test6.getCorpusPath());
+//        log.info("Model: {} training complete. Starting saving model...", model);
+//        Word2VecModel.saveModel(model);
+//        log.info("Saving completed");
     }
 }

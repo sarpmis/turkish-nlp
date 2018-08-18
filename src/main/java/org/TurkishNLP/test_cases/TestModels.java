@@ -11,11 +11,7 @@ import java.util.List;
  * This file contains Word2VecParams objects for each test case
  */
 class TestModels {
-    protected Word2VecParams test1;
-    protected Word2VecParams test2;
-    protected Word2VecParams test3;
-    protected Word2VecParams test4;
-    protected Word2VecParams test5;
+    protected Word2VecParams test1, test2, test3, test4, test5, test6;
 
     protected Collection<Word2VecParams> tests = new ArrayList();
 
@@ -39,6 +35,13 @@ class TestModels {
         test5 = new Word2VecParams("sampling_1e-5")
             .setSubSampling(1e-5);
         tests.add(test5);
+
+        test6 = new Word2VecParams("5epoch_250layer_00025learning")
+                .setNumEpochs(5)
+                .setLayerSize(250)
+                .setLearningRate(0.0025)
+                .setMinLearningRate(0.0001);
+        tests.add(test6);
     }
 
     // sets the corpus path for all tests

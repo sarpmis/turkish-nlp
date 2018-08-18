@@ -83,13 +83,13 @@ public class PreProcessor {
     }
 
     // TODO: Make this throw IOEXception instead of a billion try catch statements!!
-    public void processFile(String filepath, boolean inMem) {
-        Path outPath = Paths.get(System.getProperty("user.dir"), "data", "processed_files",
-                Paths.get(filepath).getFileName().toString().split("\\.")[0] + ".processed2");
-        if (outPath.toFile().exists()) {
-            log.info("A processed file for " + filepath + " already exists, aborting...");
-            return;
-        }
+    public void processFile(String filepath, Path outPath, boolean inMem) {
+//        Path outPath = Paths.get(System.getProperty("user.dir"), "data", "processed_files",
+//                Paths.get(filepath).getFileName().toString().split("\\.")[0] + ".processed2");
+//        if (outPath.toFile().exists()) {
+//            log.info("A processed file for " + filepath + " already exists, aborting...");
+//            return;
+//        }
 
         log.info("Starting processing file " + filepath);
 
