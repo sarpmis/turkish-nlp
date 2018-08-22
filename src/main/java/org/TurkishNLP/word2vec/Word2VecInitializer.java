@@ -168,7 +168,7 @@ public class Word2VecInitializer {
         log.info("Initializing model with params");
 
         // create dictionary iterator
-        File dictFile = p.getDictionaryPath().toFile();
+        File dictFile = new File(p.getDictionaryPath());
         SentenceIterator iterator;
         try {
             iterator = new BasicLineIterator(dictFile);

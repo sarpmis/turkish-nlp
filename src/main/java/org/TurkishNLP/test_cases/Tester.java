@@ -24,9 +24,9 @@ public class Tester {
         cases = new TestModels();
         // dictionary is trimmed with min word freq of 5
         cases.setDictionary(Paths.get(
-                System.getProperty("user.dir"), "data", "dictionaries", "remaining.dict"));
+                System.getProperty("user.dir"), "data", "dictionaries", "remaining.dict").toString());
         cases.setCorpus(Paths.get(
-                System.getProperty("user.dir"), "data", "processed_files", "trwiki_corpus.processed"));
+                System.getProperty("user.dir"), "data", "processed_files", "trwiki_corpus.processed").toString());
     }
 
     // Reads tests from file

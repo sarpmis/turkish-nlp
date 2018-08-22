@@ -1,16 +1,14 @@
 package org.TurkishNLP.preprocessing;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.IOUtils;
+import org.TurkishNLP.shared.Timer;
 
 import java.io.*;
-import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 
 /*
  * Splits a file and creates a preprocessing thread for each file, then merges them back
@@ -64,6 +62,9 @@ public class ParallelPreProcessor {
     }
 
     public void processFile(File input, File output) throws IOException {
+        log.info("Starting processing file " + input + " in parallel...");
+        Timer.setTimer();
+
         // create temp directory
         Path tempDir = Files.createTempDirectory(Paths.get(System.getProperty("user.dir"), "data"), "temp");
 
@@ -85,8 +86,11 @@ public class ParallelPreProcessor {
             }
         }
 
-        System.out.println("total lines = " + totalLines);
-        System.out.println("lines per file = " + linesPerFile);
+        log.info("Input file contains {} lines", totalLines);
+        Timer.endTimer();
+        log.info("Split file into {} pieces in " + Timer.results(), threadCount);
+
+        Timer.setTimer();
 
         // create threads for each file
         List<PreProcessorThread> threads = new ArrayList<>();
@@ -108,6 +112,11 @@ public class ParallelPreProcessor {
             }
         }
 
+        Timer.endTimer();
+        log.info("Preprocessing completed in " + Timer.results());
+
+        log.info("Saving to final destination " + output);
+        Timer.setTimer();
         // merge files into one
         try(PrintWriter out = new PrintWriter(output)) {
             for (Path temp : outputTemps) {
@@ -116,6 +125,8 @@ public class ParallelPreProcessor {
                 }
             }
         }
+        Timer.endTimer();
+        log.info("Saved file in " + Timer.results());
 
         // delete temp files
         for(Path path : tempFiles) {
@@ -129,13 +140,13 @@ public class ParallelPreProcessor {
 
     private class PreProcessorThread extends Thread {
         private final int threadId;
-        private final PreProcessor pp;
+        private final TurkishLemmatizer pp;
         private final String input;
         private final Path output;
 
         public PreProcessorThread(int threadId, String input, Path output) throws IOException {
             this.threadId = threadId;
-            this.pp = new PreProcessor();
+            this.pp = new TurkishLemmatizer();
             this.input = input;
             this.output = output;
 
@@ -143,13 +154,17 @@ public class ParallelPreProcessor {
         }
 
         public void run() {
-            pp.processFile(input, output, false);
+            try {
+                pp.processFile(input, output, false);
+            } catch(Exception e) {
+                System.out.println("Exception in " + this.getName());
+            }
         }
     }
 
     public static void main(String[] args) throws IOException {
-        ParallelPreProcessor ppp = new ParallelPreProcessor(
-                Paths.get("data\\corpora\\short_corpus.txt").toFile());
-        ppp.processFile(new File("data\\corpora\\short_corpus.txt"), new File("data\\corpora\\short_corpus.processed"));
+//        ParallelPreProcessor ppp = new ParallelPreProcessor(
+//                Paths.get("data\\corpora\\short_corpus.txt").toFile());
+//        ppp.processFile(new File("data\\corpora\\trwiki_corpus.txt"), new File("data\\processed_files\\trwiki_parallel.processed"));
     }
 }

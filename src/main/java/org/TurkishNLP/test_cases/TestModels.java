@@ -45,12 +45,12 @@ class TestModels {
     }
 
     // sets the corpus path for all tests
-    protected void setCorpus(Path corpusPath) {
+    protected void setCorpus(String corpusPath) {
         tests.forEach(p -> p.setCorpusPath(corpusPath));
     }
 
     // sets the dictionary path for all tests
-    protected void setDictionary(Path dictionaryPath) {
+    protected void setDictionary(String dictionaryPath) {
         tests.forEach(p -> p.setDictionaryPath(dictionaryPath));
     }
 

@@ -3,8 +3,14 @@ package org.TurkishNLP.word2vec;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.TurkishNLP.shared.Timer;
+import org.TurkishNLP.test_cases.AnalogyTest;
+import org.TurkishNLP.test_cases.Test;
+import org.TurkishNLP.test_cases.Tester;
 import org.deeplearning4j.models.embeddings.WeightLookupTable;
 import org.deeplearning4j.models.embeddings.inmemory.InMemoryLookupTable;
+import org.deeplearning4j.models.embeddings.learning.ElementsLearningAlgorithm;
+import org.deeplearning4j.models.embeddings.learning.impl.elements.CBOW;
+import org.deeplearning4j.models.embeddings.learning.impl.elements.SkipGram;
 import org.deeplearning4j.models.embeddings.loader.VectorsConfiguration;
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.sequencevectors.iterators.AbstractSequenceIterator;
@@ -21,14 +27,17 @@ import org.deeplearning4j.text.tokenization.tokenizerfactory.TokenizerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
 /*
  * A wrapper that holds a Word2Vec and some extra info
- * Intended to ultimately be the interface to use when doing
+ * Intended to ultimately be the class to use when doing
  * all w2v operations
  */
 @Slf4j
@@ -62,7 +71,7 @@ public class Word2VecModel {
     }
 
     // WORD OPERATIONS
-    public Collection<String> getClosest(@NonNull String word, @NonNull int top) {
+    public Collection<String> getClosest(@NonNull String word, int top) {
         return w.wordsNearest(word, top);
     }
 
@@ -86,6 +95,7 @@ public class Word2VecModel {
             log.info("Reading model '" + modelName + "'...");
             Timer.setTimer();
             Word2Vec w = WordVectorSerializer.readWord2VecModel(readPath.toString());
+
             Timer.endTimer();
             log.info("Finished reading model in " + Timer.results());
             return new Word2VecModel(w, modelName);
@@ -106,55 +116,22 @@ public class Word2VecModel {
         }
     }
 
-    public static Word2VecModel initializeWithParams(@NonNull Word2VecParams p) {
+    public static Word2VecModel initializeWithParams(@NonNull Word2VecParams p) throws IllegalArgumentException {
         log.info("Initializing model with params");
 
-        // create dictionary iterator
-        File dictFile = p.getDictionaryPath().toFile();
-        SentenceIterator iterator;
-        try {
-            iterator = new BasicLineIterator(dictFile);
-        } catch (IOException e) {
-            log.error("The dictionary path provided does not exist");
-            return null;
+        // Set the learning algorithm
+        ElementsLearningAlgorithm<VocabWord> algorithm = null;
+        switch(p.getLearningAlgorithm()) {
+            case CBOW:
+                algorithm = new CBOW<>();
+                break;
+            case SKIP_GRAM:
+                algorithm = new SkipGram<>();
+                break;
         }
 
-        log.info("Building vocabulary from dictionary...");
-
-        AbstractCache<VocabWord> vocabCache = new AbstractCache.Builder<VocabWord>().build();
-
-        TokenizerFactory tokenizer = new DefaultTokenizerFactory();
-
-        SentenceTransformer transformer = new SentenceTransformer.Builder()
-                .iterator(iterator)
-                .tokenizerFactory(tokenizer)
-                .build();
-
-        AbstractSequenceIterator<VocabWord> sequenceIterator =
-                new AbstractSequenceIterator.Builder<>(transformer).build();
-
-        // min element frequency is 1 since we use fixed dictionary. dictionary trimming
-        // is done during preprocessing
-        VocabConstructor<VocabWord> constructor = new VocabConstructor.Builder<VocabWord>()
-                .addSource(sequenceIterator, 1)
-                .setTargetVocabCache(vocabCache)
-                .build();
-
-        constructor.buildJointVocabulary(false, true);
-
-        log.info("Creating lookup table...");
-        WeightLookupTable<VocabWord> lookupTable = new InMemoryLookupTable.Builder<VocabWord>()
-                .vectorLength(p.getLayerSize())
-                .useAdaGrad(false)
-                .cache(vocabCache)
-                .build();
-
-        lookupTable.resetWeights(true);
-
-        log.info("Creating word2vec...");
-        Word2Vec vec = new Word2Vec.Builder()
-                .vocabCache(vocabCache)
-                .lookupTable(lookupTable)
+        // set hyperparameters
+        Word2Vec.Builder b = new Word2Vec.Builder()
                 .resetModel(false)
                 .epochs(p.getNumEpochs())
                 .batchSize(p.getBatchSize())
@@ -163,9 +140,64 @@ public class Word2VecModel {
                 .minLearningRate(p.getMinLearningRate())
                 .sampling(p.getSubSampling())
                 .windowSize(p.getWindowSize())
-                .build();
+                .elementsLearningAlgorithm(algorithm)
+                .minWordFrequency(p.getMinWordFrequency())
+                .negativeSample(p.getNegativeSampling())
+                .useHierarchicSoftmax(p.getHierarchicSoftmax());
 
-        Word2VecModel mod = new Word2VecModel(vec, p.getName());
+        // If dictionary path is specified then we create the dictionary
+        // from that file instead of the corpus during training
+        String dictPath = p.getDictionaryPath();
+        if(dictPath != null) {
+            // create dictionary iterator
+            File dictFile = new File(dictPath);
+            SentenceIterator iterator;
+            try {
+                iterator = new BasicLineIterator(dictFile);
+            } catch (IOException e) {
+                log.error("The dictionary path provided does not exist");
+                throw new IllegalArgumentException();
+            }
+
+            log.info("Building vocabulary from dictionary at {}", dictPath);
+
+            AbstractCache<VocabWord> vocabCache = new AbstractCache.Builder<VocabWord>().build();
+
+            TokenizerFactory tokenizer = new DefaultTokenizerFactory();
+
+            SentenceTransformer transformer = new SentenceTransformer.Builder()
+                    .iterator(iterator)
+                    .tokenizerFactory(tokenizer)
+                    .build();
+
+            AbstractSequenceIterator<VocabWord> sequenceIterator =
+                    new AbstractSequenceIterator.Builder<>(transformer).build();
+
+            // if dictionary trimming was done beforehand min word frequency should be set as 1
+            VocabConstructor<VocabWord> constructor = new VocabConstructor.Builder<VocabWord>()
+                    .addSource(sequenceIterator, p.getMinWordFrequency())
+                    .setTargetVocabCache(vocabCache)
+                    .build();
+
+            constructor.buildJointVocabulary(false, true);
+
+            log.info("Creating lookup table...");
+            WeightLookupTable<VocabWord> lookupTable = new InMemoryLookupTable.Builder<VocabWord>()
+                    .vectorLength(p.getLayerSize())
+                    .useAdaGrad(false)
+                    .cache(vocabCache)
+                    .build();
+
+            lookupTable.resetWeights(true);
+
+            b = b.vocabCache(vocabCache)
+                .lookupTable(lookupTable);
+        }
+
+        log.info("Creating word2vec...");
+        Word2Vec w = b.build();
+
+        Word2VecModel mod = new Word2VecModel(w, p.getName());
         log.info("Model initialization complete!");
         return mod;
     }
@@ -174,12 +206,65 @@ public class Word2VecModel {
         return modelName;
     }
 
-    public static void main(String[] args) {
-        Word2VecModel one = Word2VecModel.readModel("test");
-        Word2VecModel two = Word2VecModel.readModel("trimmed_dictionary");
-        System.out.println(one.getVocabCount());
-        System.out.println(one.getClosest("futbol_Noun", 10));
-        System.out.println(two.getVocabCount());
-        System.out.println(two.getClosest("futbol_Noun", 10));
+    public static void main(String[] args) throws IOException {
+//        Word2VecModel one = Word2VecModel.readModel("test");
+//        Word2VecModel two = Word2VecModel.readModel("trimmed_dictionary");
+//        System.out.println(one.getVocabCount());
+//        System.out.println(one.getClosest("futbol_Noun", 10));
+//        System.out.println(two.getVocabCount());
+//        System.out.println(two.getClosest("futbol_Noun", 10));
+//
+        // ********* MODEL TRAINING *********
+//        Word2VecParams p = new Word2VecParams("dl4j_batch_size1000")
+//                .setLayerSize(400)
+////                .setLearningRate(0.025)
+//                .setWindowSize(5)
+//                .setMinWordFrequency(5)
+//                .setSubSampling(0.001)
+////                .setMinLearningRate(0.0001)
+//                .setLearningAlgortihm(Word2VecParams.LearningAlgorithm.CBOW)
+//                .setNegativeSampling((double)5)
+//                .setNumEpochs(5)
+//                .setBatchSize(10000)
+//                .setHierarchicSoftmax(false);
+////                .setCorpusPath("data\\corpora\\gensim.txt")
+////                .setDictionaryPath("data\\corpora\\gensim.txt");
+//
+//        Word2VecModel m = Word2VecModel.initializeWithParams(p);
+//        Word2VecTrainer.trainModel(m.getWord2Vec(), Paths.get("data\\corpora\\gensim_no_punc.txt"));
+//        Word2VecModel.saveModel(m);
+
+        Word2Vec w = new Word2Vec.Builder()
+                .elementsLearningAlgorithm(new CBOW<>())
+                .epochs(5)
+                .useHierarchicSoftmax(false)
+                .negativeSample((double) 5)
+                .minWordFrequency(5)
+                .layerSize(400)
+                .sampling(0.001)
+                .iterate(new BasicLineIterator("data\\corpora\\gensim_no_punc.txt"))
+                .tokenizerFactory(new DefaultTokenizerFactory())
+                .build();
+
+        w.fit();
+//        System.out.println(m.getClosest(Arrays.asList("kral", "kadın"), Arrays.asList("erkek"), 20));
+        WordVectorSerializer.writeWord2VecModel(w, "data\\models\\dl4j.model");
+
+        // ********** TESTING **********
+        PrintWriter out = new PrintWriter("data\\testing\\gensim_vectors.txt");
+        List<String> models = Arrays.asList("dl4j2", "gensim2", "dl4j_batch_size1000");
+        Tester t = new Tester();
+        List<Test> tests = new ArrayList<>();
+        tests.add(new AnalogyTest("fransa", "paris", "roma", "italya", 20));
+        tests.add(new AnalogyTest("fransa", "paris", "londra", "ingiltere", 20));
+        tests.add(new AnalogyTest("fransa", "paris", "budapeşte", "macaristan", 20));
+        tests.add(new AnalogyTest("macaristan", "budapeşte", "bükreş", "romanya", 20));
+        tests.add(new AnalogyTest("macaristan", "budapeşte", "beijing", "çin", 20));
+        tests.add(new AnalogyTest("kral", "erkek", "kadın", "kraliçe", 20));
+        for(String modelName : models) {
+            Word2VecModel mo = Word2VecModel.readModel(modelName);
+            t.runTestsOnModel(mo, tests, out);
+        }
+        out.close();
     }
 }

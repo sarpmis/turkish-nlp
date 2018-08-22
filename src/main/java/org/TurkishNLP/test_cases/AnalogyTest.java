@@ -31,14 +31,14 @@ public class AnalogyTest implements Test {
                 .collect(Collectors.toList());
 
         StringBuilder builder = new StringBuilder();
-        int index = results.indexOf(d);
-        builder.append("Test: " + a + " is to " + b + " as " + c + " is to (" + d + ")?" + System.lineSeparator());
-        builder.append("Expected word " + d + " is the top " + index + " closest word" + System.lineSeparator());
-        builder.append("  List of " + top + " closest words = ");
         results.removeAll(Arrays.asList(a,b,c));
+        int index = results.indexOf(d) + 1;
+        builder.append("Test: " + a + " - " + b + " + " + c + " = (" + d + ")?" + System.lineSeparator());
+        builder.append("  " + d + " is the top " + index + " closest word" + System.lineSeparator());
+        builder.append("  List of " + top + " closest words = ");
         for(int i = 0; i < top; i++) {
             String word = results.get(i);
-            builder.append(i + ": " + word + " ");
+            builder.append((i+1) + ": " + word + " ");
         }
         builder.append(System.lineSeparator());
         res = builder.toString();
