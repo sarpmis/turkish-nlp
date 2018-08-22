@@ -1,8 +1,8 @@
-package org.TurkishNLP.preprocessing;
+package org.TurkishNLP.preprocessing.impl;
 
 import lombok.extern.slf4j.Slf4j;
+import org.TurkishNLP.preprocessing.PreProcessor;
 
-import javax.xml.soap.Text;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -13,7 +13,7 @@ import java.nio.file.Paths;
 import java.util.Scanner;
 
 @Slf4j
-public class TextCleaner extends PreProcessor{
+public class TextCleaner extends PreProcessor {
 
     private static String removeUnwantedCharacters(String str){
         // only alphanumeric characters, whitespace, sentence-ending punctuation or apostrophe
@@ -98,11 +98,5 @@ public class TextCleaner extends PreProcessor{
             log.error("Error while cleaning file: input or output file not found!");
             return false;
         }
-    }
-
-    public static void main(String[] args) {
-//        System.out.println(TextCleaner.cleanFileInMemory("data\\corpora\\short_gensim_no_clean.txt"));
-        TextCleaner tc = new TextCleaner();
-        tc.processFile("data\\corpora\\gensim_no_clean.txt", "data\\processed_files\\gensim.clean");
     }
 }

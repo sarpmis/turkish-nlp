@@ -1,6 +1,7 @@
 package org.TurkishNLP.preprocessing;
 
 import lombok.extern.slf4j.Slf4j;
+import org.TurkishNLP.preprocessing.impl.TurkishLemmatizer;
 import org.TurkishNLP.shared.Timer;
 
 import java.io.*;
@@ -99,9 +100,9 @@ public class ParallelPreProcessor {
         for(int j = 0; j < tempFiles.size(); j++) {
             Path outTemp = Files.createTempFile(tempDir, j + "tempfile", ".processed");
             outputTemps.add(outTemp);
-            PreProcessorThread thread = new PreProcessorThread(j + 1, tempFiles.get(j).toString(), outTemp);
-            thread.start();
-            threads.add(thread);
+//            PreProcessorThread thread = new PreProcessorThread(j + 1, tempFiles.get(j).toString(), outTemp);
+//            thread.start();
+//            threads.add(thread);
         }
 
         for(int x = 0; x < threads.size(); x++) {
@@ -140,13 +141,13 @@ public class ParallelPreProcessor {
 
     private class PreProcessorThread extends Thread {
         private final int threadId;
-        private final TurkishLemmatizer pp;
+//        private final TurkishLemmatizer pp;
         private final String input;
-        private final Path output;
+        private final String output;
 
-        public PreProcessorThread(int threadId, String input, Path output) throws IOException {
+        public PreProcessorThread(int threadId, String input, String output)  {
             this.threadId = threadId;
-            this.pp = new TurkishLemmatizer();
+//            this.pp = new TurkishLemmatizer();
             this.input = input;
             this.output = output;
 
@@ -155,7 +156,7 @@ public class ParallelPreProcessor {
 
         public void run() {
             try {
-                pp.processFile(input, output, false);
+//                pp.processFile(input, output);
             } catch(Exception e) {
                 System.out.println("Exception in " + this.getName());
             }
