@@ -12,21 +12,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 /*
+ * Naive implementation for parallelizing  preprocessors
  * Splits a file and creates a preprocessing thread for each file, then merges them back
+ * TODO: replace this with a Blocking List buffer implementation and add ParallelizablePreProcessor class
  */
 @Slf4j
-public class ParallelPreProcessor {
-//    private File[] tempFiles;
-//    private File input;
+public class ParallelPreProcessor<T extends PreProcessor> {
+    private int threadCount;
 
-//    private long totalLines, linesPerFile;
-    private int threadCount; // also file count
-
-    public ParallelPreProcessor(File input) throws IOException {
-//        this.input = input;
+    public ParallelPreProcessor() throws IOException {
         this.threadCount = Runtime.getRuntime().availableProcessors();
-//        totalLines = countLines(input);
-//        linesPerFile = totalLines / threadCount;
     }
 
     private long countLines(File f) throws IOException {
@@ -53,10 +48,12 @@ public class ParallelPreProcessor {
         out.flush();
     }
 
-    // transfers
-    private static final void efficientTransfer(final Reader source, final Writer destination) throws IOException {
+    /*
+     * Reads from source and Writes to destination using a character buffer
+     */
+    private static final void efficientTransfer(Reader source, Writer destination) throws IOException {
         char[] buffer = new char[1024 * 16];
-        int len = 0;
+        int len;
         while ((len = source.read(buffer)) >= 0) {
             destination.write(buffer, 0, len);
         }
@@ -139,7 +136,7 @@ public class ParallelPreProcessor {
         Files.delete(tempDir);
     }
 
-    private class PreProcessorThread extends Thread {
+    private class PreProcessorThread<T> extends Thread {
         private final int threadId;
 //        private final TurkishLemmatizer pp;
         private final String input;
@@ -154,6 +151,7 @@ public class ParallelPreProcessor {
             this.setName("PreProcessorThread " + threadId);
         }
 
+        @Override
         public void run() {
             try {
 //                pp.processFile(input, output);

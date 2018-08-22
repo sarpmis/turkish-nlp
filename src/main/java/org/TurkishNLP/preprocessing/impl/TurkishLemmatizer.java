@@ -1,8 +1,8 @@
 package org.TurkishNLP.preprocessing.impl;
 
 import lombok.extern.slf4j.Slf4j;
+import org.TurkishNLP.preprocessing.ParallelizablePreProcessor;
 import org.TurkishNLP.preprocessing.PreProcessor;
-import zemberek.core.logging.Log;
 import zemberek.core.turkish.PrimaryPos;
 import zemberek.morphology.TurkishMorphology;
 import zemberek.morphology.analysis.SentenceAnalysis;
@@ -26,26 +26,24 @@ import java.util.stream.Collectors;
  * Assumes that sentences do not wrap on to next lines.
  */
 @Slf4j
-public class TurkishLemmatizer extends PreProcessor {
+public class TurkishLemmatizer extends ParallelizablePreProcessor {
     private static final int LOG_PROGRESS_FREQ = 1000000;
 
     private TurkishMorphology morphology;
     private TurkishSentenceExtractor extractor;
 
-    // Zemberek has a very chatty logger so we disable it. we save the original level in case
-    // we want to enable it again
+    // Zemberek has a very chatty logger so we disable it. It can be enabled again later if necessary
     public static final Logger CHATTY = Logger.getLogger("zemberek-logger");
-    public static final Level CHATTY_ORIGINAL_LEVEL = CHATTY.getLevel();
 
     public TurkishLemmatizer() {
-        log.info("Initializing lemmatizer...");
+//        log.info("Initializing lemmatizer...");
         if(CHATTY.getLevel() == null || !CHATTY.getLevel().equals(Level.OFF)) {
             CHATTY.setLevel(Level.OFF);
             log.info("Disabled Zemberek logging");
         }
         morphology = TurkishMorphology.createWithDefaults();
         extractor = TurkishSentenceExtractor.DEFAULT;
-        log.info("Lemmatizer initialized");
+//        log.info("Lemmatizer initialized");
     }
 
     private List<DictionaryItem> analyzeSentence(String s) {
@@ -126,5 +124,17 @@ public class TurkishLemmatizer extends PreProcessor {
         } catch (FileNotFoundException e) {
             return false;
         }
+    }
+
+    @Override
+    public String processLine(String input) {
+        List<DictionaryItem> items = analyzeLine(input);
+        items = filterNumbers(filterPunctuation(items));
+        StringBuilder b = new StringBuilder();
+        if(items.size() > 0) b.append(items.get(0).getId());
+        for(int i = 1; i < items.size(); i++) {
+            b.append(" " + items.get(i).getId());
+        }
+        return b.toString();
     }
 }
