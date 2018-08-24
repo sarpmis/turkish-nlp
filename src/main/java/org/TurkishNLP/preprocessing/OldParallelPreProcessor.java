@@ -60,7 +60,7 @@ public class OldParallelPreProcessor<T extends PreProcessor> {
 
     public void processFile(File input, File output) throws IOException {
         log.info("Starting processing file " + input + " in parallel...");
-        Timer.setTimer();
+        // TODO: add timing
 
         // create temp directory
         Path tempDir = Files.createTempDirectory(Paths.get(System.getProperty("user.dir"), "data"), "temp");
@@ -84,10 +84,6 @@ public class OldParallelPreProcessor<T extends PreProcessor> {
         }
 
         log.info("Input file contains {} lines", totalLines);
-        Timer.endTimer();
-        log.info("Split file into {} pieces in " + Timer.results(), threadCount);
-
-        Timer.setTimer();
 
         // create threads for each file
         List<PreProcessorThread> threads = new ArrayList<>();
@@ -109,11 +105,8 @@ public class OldParallelPreProcessor<T extends PreProcessor> {
             }
         }
 
-        Timer.endTimer();
-        log.info("Preprocessing completed in " + Timer.results());
-
         log.info("Saving to final destination " + output);
-        Timer.setTimer();
+
         // merge files into one
         try(PrintWriter out = new PrintWriter(output)) {
             for (Path temp : outputTemps) {
@@ -122,8 +115,6 @@ public class OldParallelPreProcessor<T extends PreProcessor> {
                 }
             }
         }
-        Timer.endTimer();
-        log.info("Saved file in " + Timer.results());
 
         // delete temp files
         for(Path path : tempFiles) {

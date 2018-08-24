@@ -1,6 +1,5 @@
 package org.TurkishNLP.shell;
 
-import org.TurkishNLP.word2vec.Word2VecOperations;
 import org.deeplearning4j.models.word2vec.Word2Vec;
 import org.fusesource.jansi.AnsiConsole;
 import org.jline.builtins.Completers;
@@ -53,7 +52,7 @@ public class Shell {
                                     printGeneralError();
                                 } else {
                                     String modelName = pl.words().get(2);
-                                    w = Word2VecOperations.readModel(modelName);
+//                                    w = Word2VecOperations.readModel(modelName);
                                     System.out.println();
                                 }
                                 break;
@@ -69,7 +68,7 @@ public class Shell {
                                     if (!thirdCommand.matches("\\d+")) {
                                         printGeneralError();
                                     } else {
-                                        Word2VecOperations.printClosest(w, fourthCommand, Integer.parseInt(thirdCommand));
+//                                        Word2VecOperations.printClosest(w, fourthCommand, Integer.parseInt(thirdCommand));
                                         System.out.println();
                                     }
                                 }
