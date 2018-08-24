@@ -1,6 +1,9 @@
 package org.TurkishNLP;
 
 import lombok.extern.slf4j.Slf4j;
+import org.TurkishNLP.preprocessing.ParallelPreProcessor;
+import org.TurkishNLP.preprocessing.impl.TextCleaner;
+import org.TurkishNLP.preprocessing.impl.TurkishLemmatizer;
 import org.TurkishNLP.word2vec.Word2VecInitializer;
 import org.TurkishNLP.word2vec.Word2VecOperations;
 import org.TurkishNLP.word2vec.Word2VecTrainer;
@@ -25,44 +28,14 @@ import java.util.List;
 @Slf4j
 public class App {
     public static void main( String[] args ) throws IOException {
-//        String dictionaryPath = Paths.get(System.getProperty("user.dir"),
-//                "data", "processed_files", "dictionary.processed").toString();
-//        Word2Vec w = Word2VecInitializer.initializeModel(dictionaryPath);
+//        boolean success = false;
+//        ParallelPreProcessor<TextCleaner> cleaner = new ParallelPreProcessor<>(TextCleaner.class);
+//        success = cleaner.processFile("data\\corpora\\gensim_no_clean.txt", "data\\processed_files\\gensim_parallel.clean");
 //
-//        log.info("Initialized model with dictionary with " + dictionaryPath);
-//
-//        Collection<String> lst = w.wordsNearest("tarih_Noun", 10);
-//        log.info("Closest words to 'tarih' before training: " + lst);
-//
-//        String corpusPath = Paths.get(System.getProperty("user.dir"), "data",
-//                "processed_files","corpus.processed").toString();
-//        Word2VecTrainer.trainModel(w, corpusPath);
-//
-//        lst = w.wordsNearest("tarih_Noun", 10);
-//        log.info("Closest words to 'tarih' after training: " + lst);
-//        Word2VecOperations.saveModel(w, "test");
+//        if(success) {
+//            ParallelPreProcessor<TurkishLemmatizer> lemmatizer = new ParallelPreProcessor<>(TurkishLemmatizer.class);
+//            success = lemmatizer.processFile("data\\processed_files\\gensim_parallel.clean", "data\\processed_files\\gensim_parallel.lemma");
+//        }
 
-        Word2Vec w = Word2VecOperations.readModel("test");
-        List<String> words = Arrays.asList(new String[] {
-                "tarih_Noun",
-                "futbol_Noun",
-                "bilgi_Noun",
-                "kil_Noun",
-                "çorba_Noun",
-                "belgesel_Noun",
-                "imrenmek_Verb",
-                "Erdoğan_Noun_Prop",
-                "Recep_Noun_Prop",
-                "Tayyip_Noun_Prop"
-        });
-        for(String word : words) {
-            Collection<String> lst = w.wordsNearest(word, 10);
-            lst.forEach(x -> {
-                log.info("Similarity between " + word + " and " + x + " = " + w.similarity(word, x));
-            });
-        }
-        log.info(w.similarity("çorba_Noun", "yemek_Noun") + " ");
-        log.info(w.similarity("çorba_Noun", "torba_Noun") + " ");
-        log.info(w.similarity("çorba_Noun", "yemek_Verb") + " ");
     }
 }

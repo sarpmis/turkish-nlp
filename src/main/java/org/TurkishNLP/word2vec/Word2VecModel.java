@@ -45,21 +45,19 @@ public class Word2VecModel {
     private String modelName;
     private Word2Vec w;
     private VectorsConfiguration config;
-    private VocabCache vocab;
 
     public Word2VecModel(Word2Vec w, String modelName) {
         this.w = w;
         this.config = w.getConfiguration();
         this.modelName = modelName;
-        this.vocab = w.getVocab();
     }
 
     public int getVocabCount() {
-        return vocab.numWords();
+        return w.getVocab().numWords();
     }
 
     public VocabCache getVocab() {
-        return vocab;
+        return w.getVocab();
     }
 
     public Word2Vec getWord2Vec() {

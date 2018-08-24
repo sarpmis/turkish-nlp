@@ -17,7 +17,7 @@ import java.util.Scanner;
 @Slf4j
 public class TextCleaner extends ParallelizablePreProcessor {
 
-    private static String removeUnwantedCharacters(String str){
+    private String removeUnwantedCharacters(String str){
         // only alphanumeric characters, whitespace, sentence-ending punctuation or apostrophe
         str = str.replaceAll("[^\\p{L}\\s\\p{N}.,?!'’]", " ");
         // remove any apostrophe that isn't preceded and followed by a letter
@@ -32,14 +32,14 @@ public class TextCleaner extends ParallelizablePreProcessor {
      * Removes extra whitespace from given string, leaving single spaces between words.
      * For paragraphs with possible extra line breaks removeExtraSpacesFromParagraph
      */
-    private static String removeExtraSpaces(String str) {
+    private String removeExtraSpaces(String str) {
         return str
                 .trim()
                 .replaceAll(" +", " ");
         // TODO: remove extra spaces near punctuation
     }
 
-    private static String removeExtraSpacesFromParagraph(String str) {
+    private String removeExtraSpacesFromParagraph(String str) {
                 // remove more than one whitespace
         return removeExtraSpaces(str)
                 // remove more than one line break
@@ -50,15 +50,15 @@ public class TextCleaner extends ParallelizablePreProcessor {
                 .replaceAll(" (?=[.,?!])", "");
     }
 
-    private static String cleanParagraph(String str) {
+    private String cleanParagraph(String str) {
         return removeExtraSpacesFromParagraph(removeUnwantedCharacters(str));
     }
 
-    private static String cleanLine(String str) {
+    private String cleanLine(String str) {
         return removeExtraSpaces(removeUnwantedCharacters(str));
     }
 
-    public static String cleanFileInMemory(Path filePath) {
+    public String cleanFileInMemory(Path filePath) {
         try {
             String fileContent = new String(Files.readAllBytes(filePath), "UTF-8");
             String clean = cleanParagraph(fileContent);
@@ -69,11 +69,11 @@ public class TextCleaner extends ParallelizablePreProcessor {
         }
     }
 
-    public static String cleanFileInMemory(String filePath) {
+    public String cleanFileInMemory(String filePath) {
         return cleanFileInMemory(Paths.get(filePath));
     }
 
-    public static void cleanFileOnDisk(File input, File output) throws FileNotFoundException{
+    public void cleanFileOnDisk(File input, File output) throws FileNotFoundException{
         try (
                 Scanner in = new Scanner(input);
                 PrintWriter out = new PrintWriter(output)
@@ -106,10 +106,5 @@ public class TextCleaner extends ParallelizablePreProcessor {
     public String processLine(String input) {
         String processed = removeExtraSpaces(removeUnwantedCharacters(input));
         return processed.isEmpty() ? null : processed;
-    }
-
-    public static void main(String[] args) {
-        TextCleaner t = new TextCleaner();
-        t.processFile("data\\corpora\\medium_corpus.txt", "data\\corpora\\medium.clean");
     }
 }

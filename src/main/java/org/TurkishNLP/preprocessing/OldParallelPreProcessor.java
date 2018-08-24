@@ -159,10 +159,4 @@ public class OldParallelPreProcessor<T extends PreProcessor> {
             }
         }
     }
-
-    public static void main(String[] args) throws IOException {
-//        OldParallelPreProcessor ppp = new OldParallelPreProcessor(
-//                Paths.get("data\\corpora\\short_corpus.txt").toFile());
-//        ppp.processFile(new File("data\\corpora\\trwiki_corpus.txt"), new File("data\\processed_files\\trwiki_parallel.processed"));
-    }
 }

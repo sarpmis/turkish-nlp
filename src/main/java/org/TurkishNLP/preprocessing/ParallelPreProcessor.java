@@ -311,9 +311,4 @@ public class ParallelPreProcessor<T extends ParallelizablePreProcessor> {
             return s;
         }
     }
-
-    public static void main(String[] args) {
-        ParallelPreProcessor<TextCleaner> p = new ParallelPreProcessor<>(TextCleaner.class);
-        p.processFile("data\\corpora\\medium_corpus.txt", "data\\processed_files\\medium_parallel.processed");
-    }
 }

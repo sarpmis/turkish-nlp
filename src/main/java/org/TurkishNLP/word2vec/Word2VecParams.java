@@ -5,7 +5,7 @@ import lombok.NonNull;
 import java.nio.file.Path;
 
 public class Word2VecParams {
-    public enum LearningAlgorithm { CBOW, SKIP_GRAM; }
+    public enum LearningAlgorithm { CBOW, SKIP_GRAM }
 
     // These default values are the defaults that DL4J uses (mostly)
     public static final Double DEFAULT_LEARNING_RATE = new Double(0.025D);
