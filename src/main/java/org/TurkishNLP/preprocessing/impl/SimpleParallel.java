@@ -5,6 +5,9 @@ import org.TurkishNLP.preprocessing.ParallelizablePreProcessor;
 
 import java.io.File;
 
+/*
+ * Dummy class used for testing parallelization
+ */
 @Slf4j
 public class SimpleParallel extends ParallelizablePreProcessor {
     @Override

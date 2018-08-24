@@ -4,7 +4,12 @@ import java.io.File;
 import java.nio.file.Path;
 
 public abstract class PreProcessor {
+
     /*
+     * Input is read from the input file and written to the output file
+     *
+     * @param input the file to read input from
+     * @param output the destination to write processed file
      * @return processing succeeded
      */
     public abstract boolean processFile(File input, File output);

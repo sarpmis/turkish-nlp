@@ -1,8 +1,10 @@
 package org.TurkishNLP.preprocessing.impl;
 
 import lombok.extern.slf4j.Slf4j;
+import org.TurkishNLP.preprocessing.ParallelizablePreProcessor;
 import org.TurkishNLP.preprocessing.PreProcessor;
 
+import javax.xml.soap.Text;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -13,7 +15,7 @@ import java.nio.file.Paths;
 import java.util.Scanner;
 
 @Slf4j
-public class TextCleaner extends PreProcessor {
+public class TextCleaner extends ParallelizablePreProcessor {
 
     private static String removeUnwantedCharacters(String str){
         // only alphanumeric characters, whitespace, sentence-ending punctuation or apostrophe
@@ -98,5 +100,16 @@ public class TextCleaner extends PreProcessor {
             log.error("Error while cleaning file: input or output file not found!");
             return false;
         }
+    }
+
+    @Override
+    public String processLine(String input) {
+        String processed = removeExtraSpaces(removeUnwantedCharacters(input));
+        return processed.isEmpty() ? null : processed;
+    }
+
+    public static void main(String[] args) {
+        TextCleaner t = new TextCleaner();
+        t.processFile("data\\corpora\\medium_corpus.txt", "data\\corpora\\medium.clean");
     }
 }

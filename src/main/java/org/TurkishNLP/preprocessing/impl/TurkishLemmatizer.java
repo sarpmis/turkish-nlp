@@ -2,7 +2,6 @@ package org.TurkishNLP.preprocessing.impl;
 
 import lombok.extern.slf4j.Slf4j;
 import org.TurkishNLP.preprocessing.ParallelizablePreProcessor;
-import org.TurkishNLP.preprocessing.PreProcessor;
 import zemberek.core.turkish.PrimaryPos;
 import zemberek.morphology.TurkishMorphology;
 import zemberek.morphology.analysis.SentenceAnalysis;
@@ -24,6 +23,7 @@ import java.util.stream.Collectors;
 /*
  * Class for lemmatizing Turkish text using Zemberek library and its built in Turkish dictionary.
  * Assumes that sentences do not wrap on to next lines.
+ * Words that cannot be found in Zemberek dictionary will be replaced with UNK token
  */
 @Slf4j
 public class TurkishLemmatizer extends ParallelizablePreProcessor {
