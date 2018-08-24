@@ -26,6 +26,7 @@ import org.deeplearning4j.text.tokenization.tokenizerfactory.DefaultTokenizerFac
 import org.deeplearning4j.text.tokenization.tokenizerfactory.TokenizerFactory;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Path;
@@ -35,7 +36,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-/*
+/**
  * A wrapper that holds a Word2Vec and some extra info
  * Intended to ultimately be the class to use when doing
  * all w2v operations
@@ -46,7 +47,7 @@ public class Word2VecModel {
     private Word2Vec w;
     private VectorsConfiguration config;
 
-    public Word2VecModel(Word2Vec w, String modelName) {
+    public Word2VecModel(@NonNull Word2Vec w, @NonNull String modelName) {
         this.w = w;
         this.config = w.getConfiguration();
         this.modelName = modelName;
@@ -64,11 +65,11 @@ public class Word2VecModel {
         return w;
     }
 
-    public String getModelName() {
+    public String getName() {
         return modelName;
     }
 
-    // WORD OPERATIONS
+    //***************** WORD OPERATIONS *****************
     public Collection<String> getClosest(@NonNull String word, int top) {
         return w.wordsNearest(word, top);
     }
@@ -80,40 +81,7 @@ public class Word2VecModel {
         return w.similarity(word1, word2);
     }
 
-
-    /*
-     * Reads a Word2Vec file and returns a Word2VecModel for it
-     */
-    public static Word2VecModel readModel(@NonNull String modelName){
-        Path readPath = Paths.get(System.getProperty("user.dir"), "data", "models" ,modelName + ".model");
-        if (!readPath.toFile().exists()) {
-            log.error("Model " + modelName + " does not exist! Aborting...");
-            return null;
-        } else {
-            log.info("Reading model '" + modelName + "'...");
-            Timer.setTimer();
-            Word2Vec w = WordVectorSerializer.readWord2VecModel(readPath.toString());
-
-            Timer.endTimer();
-            log.info("Finished reading model in " + Timer.results());
-            return new Word2VecModel(w, modelName);
-        }
-    }
-
-    public static void saveModel(Word2VecModel model){
-        Path outPath = Paths.get(System.getProperty("user.dir"), "data", "models" , model.getModelName() + ".model");
-        if (outPath.toFile().exists()) {
-            log.info("A processed file " + outPath + " already exists, aborting");
-            return;
-        } else {
-            log.info("Saving model '" + model.getModelName() + "' to disk...");
-            Timer.setTimer();
-            WordVectorSerializer.writeWord2VecModel(model.getWord2Vec(), outPath.toString());
-            Timer.endTimer();
-            log.info("Finished saving model in " + Timer.results());
-        }
-    }
-
+    //***************** INITIALIZER *****************
     public static Word2VecModel initializeWithParams(@NonNull Word2VecParams p) throws IllegalArgumentException {
         log.info("Initializing model with params");
 
@@ -157,7 +125,7 @@ public class Word2VecModel {
                 throw new IllegalArgumentException();
             }
 
-            log.info("Building vocabulary from dictionary at {}", dictPath);
+            log.info("Building vocabulary from dictionary at [{}]", dictPath);
 
             AbstractCache<VocabWord> vocabCache = new AbstractCache.Builder<VocabWord>().build();
 
@@ -189,7 +157,7 @@ public class Word2VecModel {
             lookupTable.resetWeights(true);
 
             b = b.vocabCache(vocabCache)
-                .lookupTable(lookupTable);
+                    .lookupTable(lookupTable);
         }
 
         log.info("Creating word2vec...");
@@ -200,8 +168,85 @@ public class Word2VecModel {
         return mod;
     }
 
-    public String toString() {
-        return modelName;
+    //***************** MODEL READ/WRITE *****************
+    /**
+     * Reads a Word2Vec file and returns a Word2VecModel for it
+     */
+    public static Word2VecModel readModelByName(String modelName) throws FileNotFoundException{
+        String modelDirectory = System.getProperty("user.dir") + System.lineSeparator()
+                + "data" + System.lineSeparator() + "models" + System.lineSeparator();
+        return readModelByPath(modelDirectory + modelName + ".model", modelName);
+    }
+
+    public static Word2VecModel readModelByPath(String filePath, String modelName) throws FileNotFoundException {
+        File targetFile = new File(filePath);
+        if (!targetFile.exists()) {
+          log.warn("File [{}] does not exist, aborting", filePath);
+          throw new FileNotFoundException(filePath);
+        } else {
+            // TODO: add timing
+            Word2Vec w = WordVectorSerializer.readWord2VecModel(filePath);
+            return new Word2VecModel(w, modelName);
+        }
+    }
+
+    /**
+     * Saves a Word2Vec to disk
+     *
+     * @param model model that contains the Word2Vec
+     * @param filePath destination to save
+     * @param override if set to true and a file already exists at filePath replaces it
+     */
+    public static void saveModel(@NonNull Word2VecModel model, String filePath, boolean override) {
+        if(model == null) {
+            log.warn("Cannot write null model to file");
+            return;
+        }
+        File output = new File(filePath);
+        if(!output.isFile()) {
+            log.warn("[{}] is not a file, aborting", filePath);
+            return;
+        }
+        if(override && output.exists()) {
+            log.warn("The file [{}] already exists, aborting", filePath);
+            return;
+        }
+        // TODO: add timing
+        WordVectorSerializer.writeWord2VecModel(model.getWord2Vec(), filePath);
+        log.info("Finished saving model [{}] to [{}]", model.getName(), filePath);
+    }
+
+    /**
+     * Saves a given Word2VecModel instance to the designated folder for models
+     */
+    public static void saveModel(@NonNull Word2VecModel model, boolean override) {
+        String modelDirectory = System.getProperty("user.dir") + System.lineSeparator()
+                + "data" + System.lineSeparator() + "models" + System.lineSeparator();
+        // FIXME: this filepath ^ should be a constant somewhere
+        saveModel(model, modelDirectory + model.getName() + ".model", override);
+    }
+
+
+    //***************** MODEL TRAINING *****************
+    public static void trainModel(@NonNull Word2Vec model, File trainingFile) {
+        try {
+            SentenceIterator iterator = new BasicLineIterator(trainingFile);
+            TokenizerFactory tokenizer = new DefaultTokenizerFactory();
+            model.setTokenizerFactory(tokenizer);
+            model.setSentenceIterator(iterator);
+            log.info("Starting training using file [{}]", trainingFile);
+            model.fit();
+        } catch (FileNotFoundException e) {
+            log.error("Training file [{}] not found", trainingFile);
+        }
+    }
+
+    public static void trainModel(@NonNull Word2Vec model, String trainingFilePath){
+        trainModel(model, Paths.get(trainingFilePath));
+    }
+
+    public static void trainModel(@NonNull Word2Vec model, Path trainingFilePath){
+        trainModel(model, trainingFilePath.toFile());
     }
 
     public static void main(String[] args) throws IOException {
@@ -260,7 +305,7 @@ public class Word2VecModel {
         tests.add(new AnalogyTest("macaristan", "budapeşte", "beijing", "çin", 20));
         tests.add(new AnalogyTest("kral", "erkek", "kadın", "kraliçe", 20));
         for(String modelName : models) {
-            Word2VecModel mo = Word2VecModel.readModel(modelName);
+            Word2VecModel mo = Word2VecModel.readModelByName(modelName);
             t.runTestsOnModel(mo, tests, out);
         }
         out.close();

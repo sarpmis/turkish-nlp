@@ -2,8 +2,10 @@ package org.TurkishNLP.word2vec;
 
 import lombok.NonNull;
 
-import java.nio.file.Path;
-
+/**
+ * Class to easily initialize Word2VecModel objects. Uses default values
+ * if not overridden by a setter method
+ */
 public class Word2VecParams {
     public enum LearningAlgorithm { CBOW, SKIP_GRAM }
 
@@ -11,7 +13,7 @@ public class Word2VecParams {
     public static final Double DEFAULT_LEARNING_RATE = new Double(0.025D);
     public static final Double DEFAULT_MIN_LEARNING_RATE = new Double(0.0001);
     public static final Double DEFAULT_SUB_SAMPLING = new Double(0);
-    public static final Double DEFAULT_NEGATIVE_SAMPLING = new Double(0);
+    public static final Integer DEFAULT_NEGATIVE_SAMPLING = new Integer(0);
     public static final Integer DEFAULT_LAYER_SIZE = new Integer(150);
     public static final Integer DEFAULT_EPOCHS = new Integer(1);
     public static final Integer DEFAULT_WINDOW_SIZE = new Integer(5);
@@ -27,7 +29,7 @@ public class Word2VecParams {
     private Double learningRate = null;
     private Double minLearningRate = null;
     private Double subSampling = null;
-    private Double negativeSampling = null;
+    private Integer negativeSampling = null;
     private Integer layerSize = null;
     private Integer numEpochs = null;
     private Integer windowSize = null;
@@ -84,7 +86,7 @@ public class Word2VecParams {
         return this;
     }
 
-    public Word2VecParams setNegativeSampling(Double negativeSampling) {
+    public Word2VecParams setNegativeSampling(Integer negativeSampling) {
         this.negativeSampling = negativeSampling;
         return this;
     }
@@ -143,7 +145,10 @@ public class Word2VecParams {
         return subSampling == null ? DEFAULT_SUB_SAMPLING : subSampling;
     }
 
-    public Double getNegativeSampling() { return negativeSampling == null ? DEFAULT_NEGATIVE_SAMPLING : negativeSampling; }
+    public Double getNegativeSampling() {
+        // dl4j takes neg sampling as double
+        return negativeSampling == null ? (double)DEFAULT_NEGATIVE_SAMPLING : (double)negativeSampling;
+    }
 
     public Integer getLayerSize() {
         return layerSize == null ? DEFAULT_LAYER_SIZE : layerSize;
