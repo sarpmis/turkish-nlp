@@ -1,12 +1,14 @@
-package org.TurkishNLP.test_cases;
+package org.TurkishNLP.test_cases.impl;
 
+import org.TurkishNLP.test_cases.Test;
+import org.TurkishNLP.test_cases.TestResults;
 import org.TurkishNLP.word2vec.Word2VecModel;
 
 import java.util.HashMap;
 import java.util.Map;
 
 /*
- * Simple test that returns the n closest words and their similarities to a word in the model
+ * Simple test that returns the n closest words and their similarities to given word in the model
  */
 public class SimilarityTest implements Test {
     String word;
@@ -19,7 +21,7 @@ public class SimilarityTest implements Test {
         this.n = n;
     }
 
-    public void run(Word2VecModel m) {
+    public TestResults run(Word2VecModel m) {
         Map<String, Double> closest = new HashMap<>();
         m.getClosest(word, n)
                 .forEach(otherWord -> closest.put(otherWord, m.getSimilarity(word, otherWord)));
@@ -28,9 +30,6 @@ public class SimilarityTest implements Test {
         closest.forEach((otherWord,sim) -> b.append(otherWord + ": " + sim + ", ")
         );
         res = b.toString();
-    }
-
-    public String results() {
-        return res;
+        return new TestResults().setMessage(res);
     }
 }

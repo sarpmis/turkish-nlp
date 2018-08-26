@@ -14,6 +14,7 @@ import java.util.List;
  * Naive implementation for parallelizing  preprocessors
  * Splits a file and creates a preprocessing thread for each file, then merges them back
  * Might not be a good idea if system has HDD but still effective
+ * FIXME: fix old parallel
  */
 @Slf4j
 public class OldParallelPreProcessor<T extends PreProcessor> {
@@ -60,7 +61,8 @@ public class OldParallelPreProcessor<T extends PreProcessor> {
 
     public void processFile(File input, File output) throws IOException {
         log.info("Starting processing file " + input + " in parallel...");
-        // TODO: add timing
+
+        Timer.TimerToken timerToken = Timer.newToken();
 
         // create temp directory
         Path tempDir = Files.createTempDirectory(Paths.get(System.getProperty("user.dir"), "data"), "temp");
@@ -124,6 +126,9 @@ public class OldParallelPreProcessor<T extends PreProcessor> {
             Files.delete(path);
         }
         Files.delete(tempDir);
+
+        Timer.TimerResults res = Timer.checkOut(timerToken);
+        log.info("Successfully finished processing in " + res.humanReadableIncludeMillis());
     }
 
     private class PreProcessorThread<T> extends Thread {

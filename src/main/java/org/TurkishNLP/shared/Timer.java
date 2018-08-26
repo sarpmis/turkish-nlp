@@ -17,14 +17,30 @@ public class Timer {
 
     public static TimerResults checkOut(@NonNull TimerToken t) {
         if(t == null) throw new NullPointerException("Null token given to Timer!");
+        synchronized (startTimes) {
+            TimerResults r = peek(t);
+            startTimes.remove(t.getUUID());
+            return r;
+        }
+    }
+
+    public static TimerResults peek(@NonNull TimerToken t) {
+        if(t == null) throw new NullPointerException("Null token given to Timer!");
         UUID uuid = t.getUUID();
         synchronized (startTimes) {
             if(!startTimes.containsKey(uuid)) throw new RuntimeException("Timer doesn't recognize token!");
             long currentTime = System.nanoTime();
             long startTime = startTimes.get(uuid);
-            startTimes.remove(uuid);
             return new TimerResults(startTime, currentTime);
         }
+    }
+
+    public static int activeTokens() {
+        return startTimes.size();
+    }
+
+    public static boolean tokenActive(TimerToken t) {
+        return startTimes.containsKey(t.getUUID());
     }
 
     private static String millisToHumanReadable(long time) {
@@ -46,6 +62,10 @@ public class Timer {
 
         public UUID getUUID() {
             return uuid;
+        }
+
+        public boolean isActive() {
+            return Timer.tokenActive(this);
         }
 
         @Override
@@ -113,6 +133,10 @@ public class Timer {
 
         public String humanReadableIncludeMillis() {
             return humanReadable() + milliRemainder() + "ms";
+        }
+
+        public String toString() {
+            return humanReadableIncludeMillis();
         }
     }
 }

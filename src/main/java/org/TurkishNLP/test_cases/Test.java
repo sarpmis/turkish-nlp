@@ -1,23 +1,24 @@
 package org.TurkishNLP.test_cases;
 
+import org.TurkishNLP.test_cases.impl.AnalogyTest;
+import org.TurkishNLP.test_cases.impl.SimilarityTest;
 import org.TurkishNLP.word2vec.Word2VecModel;
 
 public interface Test {
-     void run(Word2VecModel m);
-     String results();
+     TestResults run(Word2VecModel m);
 
      // test tags
-     static final String SIMILARITY_TEST_TAG = "S";
-     static final String ANALOGY_TEST_TAG = "A";
+     String SIMILARITY_TEST_TAG = "S";
+     String ANALOGY_TEST_TAG = "A";
 
-     /*
+     /**
       * Reads a test from a line in the text file containing hand-written tests
       *
       * @param s the string to parse
       * @return the appropriate test object
       * @pre s must start with an appropriate tag followed by the # character and contain
       *     the arguments for the test in space separated format
-      *           */
+      */
      static Test parseTest(String s) {
           String[] arr  = s.split("#");
           if(arr.length != 2) return null;
@@ -33,9 +34,9 @@ public interface Test {
                        return null;
                    }
                case ANALOGY_TEST_TAG:
-                   if(args.length != 5) return null;
+                   if(args.length != 4) return null;
                    try {
-                       return new AnalogyTest(args[0], args[1], args[2], args[3], Integer.parseInt(args[4]));
+                       return new AnalogyTest(args[0], args[1], args[2], args[3]);
                    } catch(NumberFormatException e) {
                        return null;
                    }

@@ -68,7 +68,7 @@ public class ParallelPreProcessor<T extends ParallelizablePreProcessor> {
             PrintWriter out = new PrintWriter(output);
             )
         {
-            // TODO: add timing
+            Timer.TimerToken timerToken = Timer.newToken();
             log.info("Counting lines in file...");
             totalLines = countLines(new Scanner(input));
             in.reset();
@@ -104,6 +104,9 @@ public class ParallelPreProcessor<T extends ParallelizablePreProcessor> {
             } catch(InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
+
+            Timer.TimerResults res = Timer.checkOut(timerToken);
+            log.info("Successfully finished processing in " + res.humanReadableIncludeMillis());
         } catch(FileNotFoundException | RuntimeException e) {
             if(e instanceof RuntimeException) {
                 throw (RuntimeException) e;

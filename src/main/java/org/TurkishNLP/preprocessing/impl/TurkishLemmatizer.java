@@ -36,14 +36,12 @@ public class TurkishLemmatizer extends ParallelizablePreProcessor {
     public static final Logger CHATTY = Logger.getLogger("zemberek-logger");
 
     public TurkishLemmatizer() {
-//        log.info("Initializing lemmatizer...");
         if(CHATTY.getLevel() == null || !CHATTY.getLevel().equals(Level.OFF)) {
             CHATTY.setLevel(Level.OFF);
             log.info("Disabled Zemberek logging");
         }
         morphology = TurkishMorphology.createWithDefaults();
         extractor = TurkishSentenceExtractor.DEFAULT;
-//        log.info("Lemmatizer initialized");
     }
 
     private List<DictionaryItem> analyzeSentence(String s) {
@@ -99,6 +97,12 @@ public class TurkishLemmatizer extends ParallelizablePreProcessor {
                 .collect(Collectors.toList());
     }
 
+    private List<DictionaryItem> filterUnknown(List<DictionaryItem> items) {
+        return items.stream()
+                .filter(i -> !i.primaryPos.equals(DictionaryItem.UNKNOWN.primaryPos))
+                .collect(Collectors.toList());
+    }
+
     @Override
     public boolean processFile(File input, File output) {
         try(
@@ -110,7 +114,7 @@ public class TurkishLemmatizer extends ParallelizablePreProcessor {
             while(in.hasNextLine()) {
                 line = in.nextLine();
                 List<DictionaryItem> analyzedLineItems = analyzeLine(line);
-                analyzedLineItems = filterNumbers(filterPunctuation(analyzedLineItems));
+                analyzedLineItems = filterUnknown(filterNumbers(filterPunctuation(analyzedLineItems)));
                 writeAnalyzedLine(analyzedLineItems, out);
 
                 // logic for logging progress
@@ -129,7 +133,7 @@ public class TurkishLemmatizer extends ParallelizablePreProcessor {
     @Override
     public String processLine(String input) {
         List<DictionaryItem> items = analyzeLine(input);
-        items = filterNumbers(filterPunctuation(items));
+        items = filterUnknown(filterNumbers(filterPunctuation(items)));
         StringBuilder b = new StringBuilder();
         if(items.size() > 0) b.append(items.get(0).getId());
         for(int i = 1; i < items.size(); i++) {
