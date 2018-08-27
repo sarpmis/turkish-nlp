@@ -12,6 +12,7 @@ public interface Test {
      String ANALOGY_TEST_TAG = "A";
 
      /**
+      * ***************** DEPRECATED *****************
       * Reads a test from a line in the text file containing hand-written tests
       *
       * @param s the string to parse

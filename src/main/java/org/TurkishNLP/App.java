@@ -6,12 +6,16 @@ import org.TurkishNLP.preprocessing.impl.TurkishLemmatizer;
 import org.TurkishNLP.shared.Timer;
 import org.TurkishNLP.test_cases.Test;
 import org.TurkishNLP.test_cases.Tester;
+import org.TurkishNLP.test_cases.impl.AnalogyTest;
 import org.TurkishNLP.word2vec.Word2VecModel;
 import org.TurkishNLP.word2vec.Word2VecParams;
+import org.TurkishNLP.word2vec.model_utils.BasicModelUtils2;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 
@@ -21,8 +25,8 @@ import java.util.List;
 @Slf4j
 public class App {
     public static void main( String[] args ) throws IOException {
-        String lemmatized = "gensim_noUNK_parallel_min5";
-        String non_lemmatized = "gensim2";
+        String lemmatized = "5epoch_250layer_10min_10neg";
+        String non_lemmatized = "gensim3";
         String lemmatizedTest = "data\\testing\\lemma_tests.txt";
         String non_lemmatizedTest = "data\\testing\\non_lemma_tests.txt";
 
@@ -42,13 +46,26 @@ public class App {
                 .setWindowSize(5)
                 .setLayerSize(400)
                 .setSubSampling(0.001)
-                .setCorpusPath("data" + File.separator + "processed_files" +
-                        File.separator + "gensim_parallel_noUNK.lemma");
+                .setCorpusPath("data" + File.separator + "corpora" +
+                        File.separator + "gensim_no_punc.txt");
+//                .setCorpusPath("data" + File.separator +   "processed_files" +
+//                        File.separator + "gensim_parallel_noUNK.lemma");
 
         /**
          * LOAD
          */
         Word2VecModel m = Word2VecModel.readModelByName(p.getName());
+
+        /**
+         * TESTING NEW MODEL UTILS
+         */
+//        BasicModelUtils2 utils = new BasicModelUtils2();
+//        utils.init(m.getWord2Vec().lookupTable());
+
+//        utils.wordsNearestScored(Arrays.asList("futbol_Noun"), new ArrayList<>(), 10);
+
+//        System.out.println(m.getWord2Vec().wordsNearestSum("futbol_Noun", 10));
+//        System.out.println(utils.wordsNearestSum("futbol_Noun", 10));
 
         /**
          * Train
@@ -67,7 +84,8 @@ public class App {
          * RUN TESTS
          */
         Tester t = new Tester();
-        List<Test> tests = Tester.readTests(lemmatizedTest);
-        t.runTestsOnModel(m, tests, new PrintWriter(new File("data\\testing\\out\\" + m.getName() + ".txt")));
+//        List<Test> tests = Tester.readTests(non_lemmatizedTest);
+        List<Test> tests = AnalogyTest.readAnalogyTests("data\\testing\\analogy_tests\\capitals_lemma.txt");
+        t.runTestsOnModel(m, tests, new PrintWriter(new File("data\\testing\\out\\" + m.getName() + "_capitals.txt")));
     }
 }

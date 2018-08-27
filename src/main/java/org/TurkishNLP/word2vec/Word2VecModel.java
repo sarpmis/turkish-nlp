@@ -2,6 +2,7 @@ package org.TurkishNLP.word2vec;
 
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.TurkishNLP.shared.Timer;
 import org.deeplearning4j.models.embeddings.WeightLookupTable;
 import org.deeplearning4j.models.embeddings.inmemory.InMemoryLookupTable;
 import org.deeplearning4j.models.embeddings.learning.ElementsLearningAlgorithm;
@@ -111,6 +112,7 @@ public class Word2VecModel {
                 .learningRate(p.getLearningRate())
                 .minLearningRate(p.getMinLearningRate())
                 .sampling(p.getSubSampling())
+                .layerSize(p.getLayerSize())
                 .windowSize(p.getWindowSize())
                 .elementsLearningAlgorithm(algorithm)
                 .minWordFrequency(p.getMinWordFrequency())
@@ -185,12 +187,16 @@ public class Word2VecModel {
     }
 
     public static Word2VecModel readModelByPath(String filePath, String modelName) throws FileNotFoundException {
+        Timer.TimerToken t = Timer.newToken();
         File targetFile = new File(filePath);
+        log.info("Reading model [{}] from [{}]", modelName, filePath);
         if (!targetFile.exists()) {
           log.warn("File [{}] does not exist, aborting", filePath);
+          Timer.checkOut(t);
           throw new FileNotFoundException(filePath);
         } else {
             Word2Vec w = WordVectorSerializer.readWord2VecModel(filePath);
+            log.info("Finished reading model in {}", Timer.checkOut(t));
             return new Word2VecModel(w, modelName);
         }
     }

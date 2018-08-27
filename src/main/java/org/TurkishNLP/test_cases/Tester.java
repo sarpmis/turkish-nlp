@@ -2,6 +2,7 @@ package org.TurkishNLP.test_cases;
 
 import it.unimi.dsi.fastutil.objects.AbstractReferenceList;
 import lombok.extern.slf4j.Slf4j;
+import org.TurkishNLP.shared.Timer;
 import org.TurkishNLP.word2vec.Word2VecModel;
 import org.TurkishNLP.word2vec.Word2VecParams;
 
@@ -60,6 +61,8 @@ public class Tester {
     }
 
     public void runTestsOnModel(Word2VecModel model, Collection<Test> tests, PrintWriter out) {
+        log.info("Running [{}] tests on model [{}]", tests.size(), model.getName());
+        Timer.TimerToken token = Timer.newToken();
         List<TestResults> results = new ArrayList<>();
         tests.forEach(t -> results.add(t.run(model)));
         out.println("**** Tests for model: " + model + " ****" + System.lineSeparator());
@@ -80,6 +83,7 @@ public class Tester {
             out.println("Standard Deviation= [" + stats.getStandardDeviation() + "]");
         }
         out.flush();
+        log.info("Finished running tests in {}", Timer.checkOut(token));
     }
 
     // In memory implementation
@@ -109,5 +113,67 @@ public class Tester {
         } catch(FileNotFoundException e) {
             log.error("Test file not found at: " + testFilePath);
         }
+    }
+
+    public static void main(String[] arags) throws IOException {
+        List<Word2VecParams> params = new ArrayList<>();
+        Tester t = new Tester();
+        List<Test> tests = Tester.readTests("data\\testing\\lemma_tests.txt");
+
+        params.add(new Word2VecParams("5epoch_250layer_5min_5neg")
+                .setNumEpochs(5)
+                .setNegativeSampling(5)
+                .setMinWordFrequency(5)
+                .setLayerSize(250)
+                .setSubSampling(0.001)
+                .setCorpusPath("data" + File.separator + "processed_files" +
+                        File.separator + "gensim_parallel_noUNK.lemma"));
+        params.add(new Word2VecParams("10epoch_250layer_5min_5neg")
+                .setNumEpochs(10)
+                .setNegativeSampling(5)
+                .setMinWordFrequency(5)
+                .setLayerSize(250)
+                .setSubSampling(0.001)
+                .setCorpusPath("data" + File.separator + "processed_files" +
+                        File.separator + "gensim_parallel_noUNK.lemma"));
+        params.add(new Word2VecParams("5epoch_250layer_10min_5neg")
+                .setNumEpochs(5)
+                .setNegativeSampling(5)
+                .setMinWordFrequency(10)
+                .setLayerSize(250)
+                .setSubSampling(0.001)
+                .setCorpusPath("data" + File.separator + "processed_files" +
+                        File.separator + "gensim_parallel_noUNK.lemma"));
+        params.add(new Word2VecParams("5epoch_150layer_5min_5neg")
+                .setNumEpochs(5)
+                .setNegativeSampling(5)
+                .setMinWordFrequency(5)
+                .setLayerSize(150)
+                .setSubSampling(0.001)
+                .setCorpusPath("data" + File.separator + "processed_files" +
+                        File.separator + "gensim_parallel_noUNK.lemma"));
+        params.add(new Word2VecParams("10epoch_150layer_5min_5neg")
+                .setNumEpochs(10)
+                .setNegativeSampling(5)
+                .setMinWordFrequency(5)
+                .setLayerSize(150)
+                .setSubSampling(0.001)
+                .setCorpusPath("data" + File.separator + "processed_files" +
+                        File.separator + "gensim_parallel_noUNK.lemma"));
+        params.add(new Word2VecParams("5epoch_250layer_10min_10neg")
+                .setNumEpochs(10)
+                .setNegativeSampling(10)
+                .setMinWordFrequency(10)
+                .setLayerSize(250)
+                .setSubSampling(0.001)
+                .setCorpusPath("data" + File.separator + "processed_files" +
+                        File.separator + "gensim_parallel_noUNK.lemma"));
+        for(Word2VecParams p : params) {
+            Word2VecModel m = Word2VecModel.initializeWithParams(p);
+            Word2VecModel.trainModel(m.getWord2Vec(), p.getCorpusPath());
+            t.runTestsOnModel(m, tests, new PrintWriter(new File("data\\testing\\out\\" + m.getName() + ".txt")));
+            Word2VecModel.saveModel(m, true);
+        }
+
     }
 }

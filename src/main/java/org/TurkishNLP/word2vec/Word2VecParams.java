@@ -10,6 +10,7 @@ public class Word2VecParams {
     public enum LearningAlgorithm { CBOW, SKIP_GRAM }
 
     // These default values are the defaults that DL4J uses (mostly)
+
     public static final Double DEFAULT_LEARNING_RATE = new Double(0.025D);
     public static final Double DEFAULT_MIN_LEARNING_RATE = new Double(0.0001);
     public static final Double DEFAULT_SUB_SAMPLING = new Double(0);

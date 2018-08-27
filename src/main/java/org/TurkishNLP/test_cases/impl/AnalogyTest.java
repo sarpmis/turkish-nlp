@@ -4,9 +4,9 @@ import org.TurkishNLP.test_cases.Test;
 import org.TurkishNLP.test_cases.TestResults;
 import org.TurkishNLP.word2vec.Word2VecModel;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class AnalogyTest implements Test {
@@ -16,7 +16,7 @@ public class AnalogyTest implements Test {
     private final int TOP_WORDS_TO_SHOW = 10;
     private String res;
 
-    /*
+    /**
      * @pre top < model.vocabCount()s
      */
     public AnalogyTest(String a, String b, String c, String d) {
@@ -56,5 +56,22 @@ public class AnalogyTest implements Test {
         res.setScore((double) index);
         res.setMessage(builder.toString());
         return res;
+    }
+
+    public static List<Test> readAnalogyTests(String filePath) throws FileNotFoundException {
+        return readAnalogyTests(new File(filePath));
+    }
+
+    public static List<Test> readAnalogyTests(File file) throws FileNotFoundException {
+        List<Test> tests = new ArrayList<>();
+        Scanner sc = new Scanner(file);
+        String line;
+        while(sc.hasNextLine()) {
+            line = sc.nextLine();
+            String[] args = line.trim().split(" ");
+            if(args.length != 4) continue;
+            tests.add(new AnalogyTest(args[0], args[1], args[2], args[3]));
+        }
+        return tests;
     }
 }

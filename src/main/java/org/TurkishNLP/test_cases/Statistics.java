@@ -6,7 +6,7 @@ import java.util.List;
 
 public class Statistics {
     private final Integer size;
-    private final Double min, max, mean, sdv;
+    private final Double min, max, mean, median, sdv;
 
     public Statistics(List<Double> data) {
         DescriptiveStatistics stats = new DescriptiveStatistics();
@@ -14,8 +14,12 @@ public class Statistics {
         min = stats.getMin();
         max = stats.getMax();
         mean = stats.getMean();
+        double[] sortedVals = stats.getSortedValues();
+
+        median =
         sdv = stats.getStandardDeviation();
         size = data.size();
+
     }
 
     public Integer getSize() {
