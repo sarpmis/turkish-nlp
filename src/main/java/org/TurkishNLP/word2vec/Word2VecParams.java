@@ -13,14 +13,14 @@ public class Word2VecParams {
 
     public static final Double DEFAULT_LEARNING_RATE = new Double(0.025D);
     public static final Double DEFAULT_MIN_LEARNING_RATE = new Double(0.0001);
-    public static final Double DEFAULT_SUB_SAMPLING = new Double(0);
+    public static final Double DEFAULT_SUB_SAMPLING = new Double(0.001);
     public static final Integer DEFAULT_NEGATIVE_SAMPLING = new Integer(0);
     public static final Integer DEFAULT_LAYER_SIZE = new Integer(150);
     public static final Integer DEFAULT_EPOCHS = new Integer(1);
     public static final Integer DEFAULT_WINDOW_SIZE = new Integer(5);
     public static final Integer DEFAULT_BATCH_SIZE = new Integer(512);
     public static final Integer DEFAULT_ITERATIONS = new Integer(1);
-    public static final Integer DEFAULT_MIN_WORD_FREQUENCY = new Integer(1);
+    public static final Integer DEFAULT_MIN_WORD_FREQUENCY = new Integer(5);
     public static final Boolean DEFAULT_HIERARCHIC_SOFTMAX = new Boolean(false);
     public static final LearningAlgorithm DEFAULT_LEARNING_ALGORITHM = LearningAlgorithm.CBOW;
 

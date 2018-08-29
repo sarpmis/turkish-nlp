@@ -1,6 +1,7 @@
 package org.TurkishNLP.preprocessing.impl;
 
 import lombok.extern.slf4j.Slf4j;
+import org.TurkishNLP.preprocessing.ParallelPreProcessor;
 import org.TurkishNLP.preprocessing.ParallelizablePreProcessor;
 import zemberek.core.turkish.PrimaryPos;
 import zemberek.morphology.TurkishMorphology;
@@ -135,10 +136,15 @@ public class TurkishLemmatizer extends ParallelizablePreProcessor {
         List<DictionaryItem> items = analyzeLine(input);
         items = filterUnknown(filterNumbers(filterPunctuation(items)));
         StringBuilder b = new StringBuilder();
-        if(items.size() > 0) b.append(items.get(0).getId());
+        if(items.size() > 0) b.append(items.get(0).normalizedLemma());
         for(int i = 1; i < items.size(); i++) {
-            b.append(" " + items.get(i).getId());
+            b.append(" " + items.get(i).normalizedLemma());
         }
         return b.toString();
+    }
+
+    public static void main(String[] args) {
+        ParallelPreProcessor<TurkishLemmatizer> pp = new ParallelPreProcessor<>(TurkishLemmatizer.class);
+        pp.processFile("data\\processed_files\\gensim_parallel.clean", "data\\processed_files\\normalized.lemma");
     }
 }

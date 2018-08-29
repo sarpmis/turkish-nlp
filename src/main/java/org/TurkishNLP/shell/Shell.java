@@ -19,7 +19,7 @@ public class Shell {
         Completer completer = new Completers.TreeCompleter(
                 node("help"),
                 node("model",
-                        node("read", "save", "closest", "sim")),
+                        node("mount", "save", "closest", "sim")),
                 node("exit"));
 
         Parser parser = new DefaultParser();
@@ -47,7 +47,7 @@ public class Shell {
                     } else {
                         String secondCommand = pl.words().get(1);
                         switch (secondCommand) {
-                            case "read":
+                            case "mount":
                                 if(pl.words().size() != 3) {
                                     printGeneralError();
                                 } else {
@@ -83,7 +83,7 @@ public class Shell {
                                 }
                                 break;
                         }
-                        if(secondCommand.equals("read")){
+                        if(secondCommand.equals("mount")){
 
                         } else if(secondCommand.equals("save")){
 

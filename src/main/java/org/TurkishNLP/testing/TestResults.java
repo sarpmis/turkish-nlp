@@ -1,4 +1,4 @@
-package org.TurkishNLP.test_cases;
+package org.TurkishNLP.testing;
 
 public class TestResults {
     private Double score;
@@ -27,4 +27,3 @@ public class TestResults {
         return message;
     }
 }
-

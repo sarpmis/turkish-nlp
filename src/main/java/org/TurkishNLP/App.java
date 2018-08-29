@@ -1,21 +1,15 @@
 package org.TurkishNLP;
 
 import lombok.extern.slf4j.Slf4j;
-import org.TurkishNLP.preprocessing.ParallelPreProcessor;
-import org.TurkishNLP.preprocessing.impl.TurkishLemmatizer;
-import org.TurkishNLP.shared.Timer;
-import org.TurkishNLP.test_cases.Test;
-import org.TurkishNLP.test_cases.Tester;
-import org.TurkishNLP.test_cases.impl.AnalogyTest;
+import org.TurkishNLP.testing.Test;
+import org.TurkishNLP.testing.Tester;
+import org.TurkishNLP.testing.impl.AnalogyTest;
 import org.TurkishNLP.word2vec.Word2VecModel;
 import org.TurkishNLP.word2vec.Word2VecParams;
-import org.TurkishNLP.word2vec.model_utils.BasicModelUtils2;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 
@@ -39,7 +33,7 @@ public class App {
         /**
          * PARAM
          */
-        Word2VecParams p = new Word2VecParams(lemmatized)
+        Word2VecParams p = new Word2VecParams(non_lemmatized)
                 .setNumEpochs(5)
                 .setNegativeSampling(5)
                 .setMinWordFrequency(5)
@@ -59,7 +53,7 @@ public class App {
         /**
          * TESTING NEW MODEL UTILS
          */
-//        BasicModelUtils2 utils = new BasicModelUtils2();
+//        BetterModelUtils utils = new BetterModelUtils();
 //        utils.init(m.getWord2Vec().lookupTable());
 
 //        utils.wordsNearestScored(Arrays.asList("futbol_Noun"), new ArrayList<>(), 10);
@@ -84,8 +78,7 @@ public class App {
          * RUN TESTS
          */
         Tester t = new Tester();
-//        List<Test> tests = Tester.readTests(non_lemmatizedTest);
-        List<Test> tests = AnalogyTest.readAnalogyTests("data\\testing\\analogy_tests\\capitals_lemma.txt");
-        t.runTestsOnModel(m, tests, new PrintWriter(new File("data\\testing\\out\\" + m.getName() + "_capitals.txt")));
+        List<Test> tests = AnalogyTest.readAnalogyTests("data\\testing\\analogy_tests\\antonyms.txt.txt");
+        t.runTestsOnModel(m, tests, new PrintWriter(new File("data\\testing\\out\\" + m.getName() + "_antonyms.txt")));
     }
 }

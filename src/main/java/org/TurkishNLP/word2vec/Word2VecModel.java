@@ -3,6 +3,7 @@ package org.TurkishNLP.word2vec;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.TurkishNLP.shared.Timer;
+import org.TurkishNLP.word2vec.model_utils.BetterModelUtils;
 import org.deeplearning4j.models.embeddings.WeightLookupTable;
 import org.deeplearning4j.models.embeddings.inmemory.InMemoryLookupTable;
 import org.deeplearning4j.models.embeddings.learning.ElementsLearningAlgorithm;
@@ -28,6 +29,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -41,12 +43,13 @@ import java.util.stream.Collectors;
 public class Word2VecModel {
     private String modelName;
     private Word2Vec w;
-    private VectorsConfiguration config;
+    private BetterModelUtils modelUtils;
 
     public Word2VecModel(@NonNull Word2Vec w, @NonNull String modelName) {
         this.w = w;
-        this.config = w.getConfiguration();
         this.modelName = modelName;
+        this.modelUtils = new BetterModelUtils();
+        modelUtils.init(w.lookupTable());
     }
 
     public int getVocabCount() {
@@ -66,18 +69,34 @@ public class Word2VecModel {
     }
 
     //***************** WORD OPERATIONS *****************
-    public Collection<String> getClosest(@NonNull String word, int top) {
-        return w.wordsNearest(word, top);
+    public List<BetterModelUtils.ScoredLabel> getClosest(@NonNull String word, int top) {
+        return this.getClosest(Arrays.asList(word), new ArrayList<>(), top);
     }
 
-    public Collection<String> getClosest(List<String> positive, List<String> negative, int top) {
+    public List<BetterModelUtils.ScoredLabel> getClosest(List<String> positive, List<String> negative, int top) {
         try {
-            return w.wordsNearestSum(positive, negative, top);
+            // get extra labels because we don't want to return positive or negative words
+            List<BetterModelUtils.ScoredLabel> temp =
+                    modelUtils.wordsNearestScored(positive, negative, top + positive.size() + negative.size());
+            List<BetterModelUtils.ScoredLabel> ret = new ArrayList<>();
+
+            // Only add non positive/negative words
+            for(BetterModelUtils.ScoredLabel s : temp) {
+                if(!(positive.contains(s.getLabel()) || negative.contains(s.getLabel()))) {
+                   ret.add(s);
+                }
+            }
+
+            // remove any extra labels we have from the top
+            while(ret.size() > top) ret.remove(ret.size()-1);
+
+            return ret;
         } catch(NullPointerException e) {
+            // if model utils failed then log which words don't appear in vocab
             List<String> temp = new ArrayList<>();
             temp.addAll(positive);
             temp.addAll(negative);
-            VocabCache v = getVocab();
+            VocabCache v = this.getVocab();
             temp = temp.stream().filter(i -> !v.containsWord(i)).collect(Collectors.toList());
             log.error("Words: {} don't appear in the vocabulary", temp);
             return null;

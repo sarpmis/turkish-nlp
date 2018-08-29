@@ -1,4 +1,4 @@
-package org.TurkishNLP.test_cases.generator;
+package org.TurkishNLP.testing.generator;
 
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -75,6 +75,7 @@ public class AnalogyGenerator {
                 b = rel.getTo();
                 c = otherRel.getTo();
                 d = otherRel.getFrom();
+
                 if(reverse) {
                     bld.append(b + " " + a + " " + d + " " + c);
                 } else {
@@ -125,17 +126,22 @@ public class AnalogyGenerator {
     public static void main(String[] args) {
         TurkishLemmatizer t = new TurkishLemmatizer();
         AnalogyGenerator g = new AnalogyGenerator();
+
+        // lemmatized?
+        boolean lemma = false;
+        String source = "capitals";
+
         try {
-            List<StringRelation> relations = g.readRelationsFromFile("data\\testing\\relations_capitals.txt");
-            PrintWriter pw = new PrintWriter("data\\testing\\analogy_tests\\capitals_lemma.txt");
-            String[] lines = g.generateTests(relations, false).split("\n");
+            // source
+            List<StringRelation> relations = g.readRelationsFromFile("data\\testing\\relations\\relations_" + source + ".txt");
+            // destination
+            PrintWriter pw = new PrintWriter("data\\testing\\analogy_tests\\" + source +
+                    (lemma ? "_lemma.txt" : ".txt"));
+
+
+            String[] lines = g.generateTests(relations, false).split(System.lineSeparator());
             Arrays.stream(lines).forEach(l -> {
-                pw.println(t.processLine(l));
-            });
-            pw.println();
-            lines = g.generateTests(relations, false).split("\n");
-            Arrays.stream(lines).forEach(l -> {
-                pw.println(t.processLine(l));
+                pw.println((lemma ? t.processLine(l) : l));
             });
             pw.close();
         } catch (FileNotFoundException e) {

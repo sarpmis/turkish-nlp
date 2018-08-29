@@ -1,57 +1,42 @@
 package org.TurkishNLP.word2vec.model_utils;
 
-import com.google.common.collect.Lists;
-import lombok.NonNull;
 import org.TurkishNLP.word2vec.Word2VecModel;
 import org.deeplearning4j.models.embeddings.inmemory.InMemoryLookupTable;
-import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.embeddings.reader.impl.BasicModelUtils;
 import org.deeplearning4j.models.sequencevectors.sequence.SequenceElement;
 import org.deeplearning4j.models.word2vec.VocabWord;
 import org.deeplearning4j.models.word2vec.Word2Vec;
-import org.deeplearning4j.text.sentenceiterator.BasicLineIterator;
-import org.deeplearning4j.text.sentenceiterator.SentenceIterator;
-import org.deeplearning4j.text.tokenization.tokenizer.preprocessor.CommonPreprocessor;
-import org.deeplearning4j.text.tokenization.tokenizerfactory.DefaultTokenizerFactory;
-import org.deeplearning4j.text.tokenization.tokenizerfactory.TokenizerFactory;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
-import org.nd4j.linalg.ops.transforms.Transforms;
-import org.nd4j.linalg.primitives.Counter;
-import org.nd4j.linalg.util.MathUtils;
-import org.nd4j.util.SetUtils;
 
 import java.io.IOException;
 import java.util.*;
 
 /**
  * An adaptation of BasicModelUtils from the DL4J library that can return scores as well as labels
- * from wordsNearest queries. Also normalization is optional and done manually
+ * from wordsNearest queries. Also normalizes vectors by default
  *
  * Most of the code is reused and reorganized from BasicModelUtils
  * @param <T>
  */
-public class BasicModelUtils2<T extends SequenceElement> extends BasicModelUtils<T> {
+public class BetterModelUtils<T extends SequenceElement> extends BasicModelUtils<T> {
 
-    public List<ScoredLabel> wordsNearestScored(INDArray words, int top) {
+    public List<ScoredLabel> wordsNearestScored(INDArray word, int top) {
         InMemoryLookupTable l = (InMemoryLookupTable) lookupTable;
         INDArray syn0 = l.getSyn0();
         if (!normalized) {
             synchronized (this) {
                 if (!normalized) {
-                    System.out.println(((InMemoryLookupTable) lookupTable).getVocab().numWords());
-                    System.out.println(syn0.size(0) + " " + syn0.size(1));
                     syn0.diviColumnVector(syn0.norm2(1));
                     normalized = true;
                 }
             }
         }
-        INDArray weights = syn0.norm2(0).rdivi(1).muli(words);
+        INDArray weights = syn0.norm2(0).rdivi(1).muli(word);
         INDArray distances = syn0.mulRowVector(weights).sum(1);
         INDArray[] sorted = Nd4j.sortWithIndices(distances, 0, false);
         INDArray sort = sorted[0];
         List<ScoredLabel> ret = new ArrayList<>();
-
 
         if (top > sort.length())
             top = sort.length();
@@ -65,10 +50,14 @@ public class BasicModelUtils2<T extends SequenceElement> extends BasicModelUtils
                     break;
                 continue;
             }
-            System.out.println(sort.getInt(i) + " " + vocabCache.wordAtIndex(sort.getInt(i)) + " : " + sorted[1].getDouble(i));
-//            ret.add(vocabCache.wordAtIndex(sort.geInt(i)));
+//            System.out.println(sort.getInt(i) + " " + vocabCache.wordAtIndex(sort.getInt(i)) + " : " + sorted[1].getDouble(i));
+            ret.add(new ScoredLabel(vocabCache.wordAtIndex(sort.getInt(i)), sorted[1].getDouble(i)));
         }
+        return ret;
 
+        /**
+         * THIS IS FOR ON-DISK
+         */
 //        Counter<String> dist = new Counter<>();
 //
 //        for (String s : vocabCache.words()) {
@@ -81,15 +70,12 @@ public class BasicModelUtils2<T extends SequenceElement> extends BasicModelUtils
 //        for(String s : dist.keySet()) {
 //            System.out.println(s + " : " + dist.getProbability(s));
 //        }
-        return null;
     }
 
     public List<ScoredLabel> wordsNearestScored(Collection<String> positive, Collection<String> negative, int top) {
         INDArray words = Nd4j.create(lookupTable.layerSize());
-        //    Set<String> union = SetUtils.union(new HashSet<>(positive), new HashSet<>(negative));
         for (String s : positive)
             words.addi(lookupTable.vector(s));
-
 
         for (String s : negative)
             words.addi(lookupTable.vector(s).mul(-1));
@@ -113,6 +99,34 @@ public class BasicModelUtils2<T extends SequenceElement> extends BasicModelUtils
         public String getLabel() {
             return label;
         }
+
+        @Override
+        public String toString() {
+            return label + " : " + score;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) {
+                return false;
+            }
+
+            if(!ScoredLabel.class.isAssignableFrom(obj.getClass())) {
+                return false;
+            }
+
+            final ScoredLabel other = (ScoredLabel) obj;
+            if ((this.label == null) ? (other.label != null) : !this.label.equals(other.label)) {
+                return false;
+            }
+
+            if (this.score != other.score) {
+                return false;
+            }
+
+            return true;
+        }
+
     }
 
 
@@ -125,23 +139,12 @@ public class BasicModelUtils2<T extends SequenceElement> extends BasicModelUtils
 //                .iterate(iter)
 //                .tokenizerFactory(t)
 //                .build();
-//        System.out.println(w.getLayerSize());
-//        System.out.println(w.getLookupTable().layerSize());
-//        InMemoryLookupTable l = (InMemoryLookupTable) w.getLookupTable();
-//        w.fit();
-//        System.out.println(l.getSyn0().size(0) + " " + l.getSyn0().size(1));
-//        WordVectorSerializer.writeWord2VecModel(w, "data\\models\\temp.model");
-//        w = WordVectorSerializer.readWord2VecModel("data\\models\\temp.model");
-//        System.out.println(w.getLayerSize());
-//        System.out.println(w.getLookupTable().layerSize());
-//        l = (InMemoryLookupTable) w.getLookupTable();
-//        System.out.println(l.getSyn0().size(0) + " " + l.getSyn0().size(1));
-        Word2VecModel m = Word2VecModel.readModelByName("gensim");
-        InMemoryLookupTable l = (InMemoryLookupTable) m.getWord2Vec().getLookupTable();
-        System.out.println(l.getSyn0().size(0) + " " + l.getSyn0().size(1));
-
-        m = Word2VecModel.readModelByName("gensim_noUNK_parallel_min5");
-        l = (InMemoryLookupTable) m.getWord2Vec().getLookupTable();
-        System.out.println(l.getSyn0().size(0) + " " + l.getSyn0().size(1));
+        Word2VecModel model = Word2VecModel.readModelByName("n_10epoch_250layer_10min_15neg");
+        Word2Vec w = model.getWord2Vec();
+        InMemoryLookupTable l = (InMemoryLookupTable) w.getLookupTable();
+        BetterModelUtils<VocabWord> utils = new BetterModelUtils<>();
+        utils.init(l);
+//        utils.normalized = true;
+        System.out.println(utils.wordsNearestScored(Arrays.asList("paris", "japonya"), Arrays.asList("fransa"), 10));
     }
 }

@@ -1,7 +1,7 @@
-package org.TurkishNLP.test_cases;
+package org.TurkishNLP.testing;
 
-import org.TurkishNLP.test_cases.impl.AnalogyTest;
-import org.TurkishNLP.test_cases.impl.SimilarityTest;
+import org.TurkishNLP.testing.impl.AnalogyTest;
+import org.TurkishNLP.testing.impl.SimilarityTest;
 import org.TurkishNLP.word2vec.Word2VecModel;
 
 public interface Test {

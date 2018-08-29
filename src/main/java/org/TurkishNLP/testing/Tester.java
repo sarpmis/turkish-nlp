@@ -1,14 +1,14 @@
-package org.TurkishNLP.test_cases;
+package org.TurkishNLP.testing;
 
-import it.unimi.dsi.fastutil.objects.AbstractReferenceList;
 import lombok.extern.slf4j.Slf4j;
+import org.TurkishNLP.shared.MathOps;
+import org.TurkishNLP.shared.Statistics;
 import org.TurkishNLP.shared.Timer;
 import org.TurkishNLP.word2vec.Word2VecModel;
 import org.TurkishNLP.word2vec.Word2VecParams;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -64,23 +64,42 @@ public class Tester {
         log.info("Running [{}] tests on model [{}]", tests.size(), model.getName());
         Timer.TimerToken token = Timer.newToken();
         List<TestResults> results = new ArrayList<>();
-        tests.forEach(t -> results.add(t.run(model)));
-        out.println("**** Tests for model: " + model + " ****" + System.lineSeparator());
+
+        int totalTests = tests.size();
+        int testsRan = 0;
+        for(Test t : tests) {
+            results.add(t.run(model));
+            testsRan++;
+            if(totalTests < 40) continue;
+            if(testsRan % (totalTests / 20) == 0 || testsRan == totalTests) {
+                double percentage = Math.round(((testsRan * 100.0d) / totalTests)*100.0) / 100.0;
+                log.info("Ran [{}] tests so far: [{}%]", testsRan, percentage);
+            }
+        }
+
+        out.println("**** Tests for model: " + model.getName() + " ****" + System.lineSeparator());
+
         List<Double> scores = new ArrayList<>();
-        results.forEach(r -> {
+        for(TestResults r : results) {
             out.println(r.getMessage());
             if(!r.getScore().equals(Double.NaN)) {
                 scores.add(r.getScore());
             }
-        });
+        }
+
         if(scores.size() > 0) {
+            int decimals = 3;
             Statistics stats = new Statistics(scores);
             out.println("****** SUMMARY ******");
             out.println(stats.getSize() +  " scores analyzed.");
-            out.println("Min= [" + stats.getMin() + "]");
-            out.println("Max= [" + stats.getMax() + "]");
-            out.println("Mean= [" + stats.getMean() + "]");
-            out.println("Standard Deviation= [" + stats.getStandardDeviation() + "]");
+            double percentage = Math.round(((stats.getOnesCount() * 100.0d) / scores.size())*100.0) / 100.0;
+            out.println("Perfect Answers = [" + stats.getOnesCount() + "(" + percentage + "%)]");
+            out.println("Min= [" + MathOps.roundDoubleTo(stats.getMin(), decimals) + "]");
+            out.println("Max= [" + MathOps.roundDoubleTo(stats.getMax(), decimals) + "]");
+            out.println("Mean= [" + MathOps.roundDoubleTo(stats.getMean(), decimals) + "]");
+            out.println("Mean of Logs= [" + MathOps.roundDoubleTo(stats.getLogMean(), decimals) + "]");
+            out.println("Median = [" + MathOps.roundDoubleTo(stats.getMedian(), decimals) + "]");
+            out.println("Standard Deviation= [" + MathOps.roundDoubleTo(stats.getStandardDeviation(), decimals) + "]");
         }
         out.flush();
         log.info("Finished running tests in {}", Timer.checkOut(token));
@@ -113,67 +132,5 @@ public class Tester {
         } catch(FileNotFoundException e) {
             log.error("Test file not found at: " + testFilePath);
         }
-    }
-
-    public static void main(String[] arags) throws IOException {
-        List<Word2VecParams> params = new ArrayList<>();
-        Tester t = new Tester();
-        List<Test> tests = Tester.readTests("data\\testing\\lemma_tests.txt");
-
-        params.add(new Word2VecParams("5epoch_250layer_5min_5neg")
-                .setNumEpochs(5)
-                .setNegativeSampling(5)
-                .setMinWordFrequency(5)
-                .setLayerSize(250)
-                .setSubSampling(0.001)
-                .setCorpusPath("data" + File.separator + "processed_files" +
-                        File.separator + "gensim_parallel_noUNK.lemma"));
-        params.add(new Word2VecParams("10epoch_250layer_5min_5neg")
-                .setNumEpochs(10)
-                .setNegativeSampling(5)
-                .setMinWordFrequency(5)
-                .setLayerSize(250)
-                .setSubSampling(0.001)
-                .setCorpusPath("data" + File.separator + "processed_files" +
-                        File.separator + "gensim_parallel_noUNK.lemma"));
-        params.add(new Word2VecParams("5epoch_250layer_10min_5neg")
-                .setNumEpochs(5)
-                .setNegativeSampling(5)
-                .setMinWordFrequency(10)
-                .setLayerSize(250)
-                .setSubSampling(0.001)
-                .setCorpusPath("data" + File.separator + "processed_files" +
-                        File.separator + "gensim_parallel_noUNK.lemma"));
-        params.add(new Word2VecParams("5epoch_150layer_5min_5neg")
-                .setNumEpochs(5)
-                .setNegativeSampling(5)
-                .setMinWordFrequency(5)
-                .setLayerSize(150)
-                .setSubSampling(0.001)
-                .setCorpusPath("data" + File.separator + "processed_files" +
-                        File.separator + "gensim_parallel_noUNK.lemma"));
-        params.add(new Word2VecParams("10epoch_150layer_5min_5neg")
-                .setNumEpochs(10)
-                .setNegativeSampling(5)
-                .setMinWordFrequency(5)
-                .setLayerSize(150)
-                .setSubSampling(0.001)
-                .setCorpusPath("data" + File.separator + "processed_files" +
-                        File.separator + "gensim_parallel_noUNK.lemma"));
-        params.add(new Word2VecParams("5epoch_250layer_10min_10neg")
-                .setNumEpochs(10)
-                .setNegativeSampling(10)
-                .setMinWordFrequency(10)
-                .setLayerSize(250)
-                .setSubSampling(0.001)
-                .setCorpusPath("data" + File.separator + "processed_files" +
-                        File.separator + "gensim_parallel_noUNK.lemma"));
-        for(Word2VecParams p : params) {
-            Word2VecModel m = Word2VecModel.initializeWithParams(p);
-            Word2VecModel.trainModel(m.getWord2Vec(), p.getCorpusPath());
-            t.runTestsOnModel(m, tests, new PrintWriter(new File("data\\testing\\out\\" + m.getName() + ".txt")));
-            Word2VecModel.saveModel(m, true);
-        }
-
     }
 }
