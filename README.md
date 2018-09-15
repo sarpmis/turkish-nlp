@@ -50,7 +50,7 @@ System.out.println("closest word: " + results.get(0).getLabel);
 System.out.println("similarity: " + results.get(0).getScore);
 ```
 
-** You can also create an AnalogyTest which is easier **
+**You can also create an AnalogyTest which is easier**
 
 ```
 AnalogyTest myTest = new AnalogyTest("king", "man", "woman", "queen");
@@ -63,7 +63,7 @@ System.out.println(results.getMessage);
 System.out.println(results.getScore);
 ```
 
-** Tests can be run in bulk as well **
+**Tests can be run in bulk as well**
 
 ```
 Tester tester = new Tester();
